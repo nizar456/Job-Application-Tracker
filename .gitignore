@@ -71,3 +71,8 @@ dist-ssr/
 # Environment files
 .env
 .env.local
+
+# .NET configuration with local secrets
+**/appsettings.Development.json
+Backend/appsettings.Development.json
+Frontend/appsettings.Development.json

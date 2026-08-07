@@ -47,6 +47,52 @@ Keep API endpoints user-scoped: an authenticated user must never read or change 
 | Contact | Recruiter or hiring-manager details for an application. |
 | Tag | User-defined categorisation for applications. |
 
+## Local development
+
+### Run PostgreSQL locally
+
+Option A — Homebrew:
+
+```sh
+brew install postgresql@17
+brew services start postgresql@17
+createdb inventorydb
+```
+
+Option B — Docker:
+
+```sh
+docker run --name jobtracker-db -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=inventorydb -p 5432:5432 -d postgres:17
+```
+
+The development connection string is read from `Backend/appsettings.Development.json`:
+
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Host=localhost;Port=5432;Database=inventorydb;Username=fikhanenizar;Password=admin"
+}
+```
+
+Keep real secrets out of source control. Override the connection string in production via environment variables (e.g. `ConnectionStrings__DefaultConnection`) or user secrets, never in `appsettings.json`.
+
+### Apply database migrations
+
+The Backend uses Entity Framework Core migrations (`Backend/Data/Migrations`).
+
+```sh
+# one-time setup: install the local dotnet-ef tool (uses .config/dotnet-tools.json)
+dotnet tool restore
+
+# create the database and apply pending migrations
+dotnet ef database update --project Backend --startup-project Backend
+```
+
+Add a new migration after domain changes with:
+
+```sh
+dotnet ef migrations add <Name> --project Backend --startup-project Backend
+```
+
 ## Definition of done
 
 A feature is done when it has clear validation, authorization checks, appropriate tests, a simple usable Blazor UI, and no unrelated changes.
