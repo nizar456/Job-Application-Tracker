@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Backend.Models;
 using Backend.Services;
 
@@ -24,7 +23,7 @@ public static class JobApplicationEndpoints
         [AsParameters] JobApplicationQuery query,
         JobApplicationService service)
     {
-        var userId = GetUserId(httpContext);
+        var userId = EndpointHelpers.GetUserId(httpContext);
         var result = await service.ListAsync(userId, query);
         return Results.Ok(result);
     }
@@ -34,9 +33,11 @@ public static class JobApplicationEndpoints
         Guid id,
         JobApplicationService service)
     {
-        var userId = GetUserId(httpContext);
+        var userId = EndpointHelpers.GetUserId(httpContext);
         var application = await service.GetAsync(userId, id);
-        return application is null ? NotFoundProblem() : Results.Ok(application);
+        return application is null
+            ? EndpointHelpers.NotFoundProblem("The requested job application was not found.")
+            : Results.Ok(application);
     }
 
     private static async Task<IResult> CreateAsync(
@@ -50,11 +51,11 @@ public static class JobApplicationEndpoints
             return validation;
         }
 
-        var userId = GetUserId(httpContext);
+        var userId = EndpointHelpers.GetUserId(httpContext);
         var result = await service.CreateAsync(userId, request);
         return result.IsSuccess
             ? Results.Created($"/applications/{result.Value!.Id}", result.Value)
-            : ToErrorResult(result);
+            : EndpointHelpers.ToErrorResult(result, "The requested job application was not found.");
     }
 
     private static async Task<IResult> UpdateAsync(
@@ -69,11 +70,11 @@ public static class JobApplicationEndpoints
             return validation;
         }
 
-        var userId = GetUserId(httpContext);
+        var userId = EndpointHelpers.GetUserId(httpContext);
         var result = await service.UpdateAsync(userId, id, request);
         return result.IsSuccess
             ? Results.Ok(result.Value)
-            : ToErrorResult(result);
+            : EndpointHelpers.ToErrorResult(result, "The requested job application was not found.");
     }
 
     private static async Task<IResult> DeleteAsync(
@@ -81,23 +82,10 @@ public static class JobApplicationEndpoints
         Guid id,
         JobApplicationService service)
     {
-        var userId = GetUserId(httpContext);
+        var userId = EndpointHelpers.GetUserId(httpContext);
         var result = await service.DeleteAsync(userId, id);
-        return result.IsSuccess ? Results.NoContent() : NotFoundProblem();
+        return result.IsSuccess
+            ? Results.NoContent()
+            : EndpointHelpers.NotFoundProblem("The requested job application was not found.");
     }
-
-    private static IResult ToErrorResult<T>(CommandResult<T> result) =>
-        result.NotFound
-            ? NotFoundProblem()
-            : Results.ValidationProblem(result.Errors!);
-
-    private static IResult NotFoundProblem() => Results.Problem(
-        statusCode: StatusCodes.Status404NotFound,
-        title: "Not Found",
-        detail: "The requested job application was not found.");
-
-    private static string GetUserId(HttpContext httpContext) =>
-        httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? httpContext.User.FindFirstValue("sub")
-        ?? throw new InvalidOperationException("Authenticated user has no identifier claim.");
 }

@@ -78,6 +78,10 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddScoped<JobApplicationService>();
+builder.Services.AddScoped<CompanyService>();
+builder.Services.AddScoped<ResumeVersionService>();
+builder.Services.AddScoped<TagService>();
+builder.Services.AddScoped<ContactService>();
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
@@ -95,6 +99,10 @@ app.UseAuthorization();
 app.MapHealthChecks("/health").AllowAnonymous();
 app.MapAuthEndpoints();
 app.MapJobApplicationEndpoints();
+app.MapCompanyEndpoints();
+app.MapResumeVersionEndpoints();
+app.MapTagEndpoints();
+app.MapContactEndpoints();
 
 var summaries = new[]
 {
