@@ -1,8 +1,6 @@
-using System.ComponentModel.DataAnnotations;
 using Backend.Models;
 using Backend.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Endpoints;
 
@@ -23,7 +21,7 @@ public static class AuthEndpoints
         UserManager<ApplicationUser> userManager,
         TokenService tokenService)
     {
-        var validation = Validate(request);
+        var validation = ValidationHelper.Validate(request);
         if (validation is not null)
         {
             return validation;
@@ -47,7 +45,7 @@ public static class AuthEndpoints
         SignInManager<ApplicationUser> signInManager,
         TokenService tokenService)
     {
-        var validation = Validate(request);
+        var validation = ValidationHelper.Validate(request);
         if (validation is not null)
         {
             return validation;
@@ -72,18 +70,5 @@ public static class AuthEndpoints
     {
         var (token, expiresAt) = tokenService.CreateToken(user);
         return new AuthResponse(token, expiresAt, user.UserName!, user.Email!);
-    }
-
-    private static IResult? Validate<T>(T request) where T : class
-    {
-        var results = new List<ValidationResult>();
-        if (Validator.TryValidateObject(request, new ValidationContext(request), results, validateAllProperties: true))
-        {
-            return null;
-        }
-
-        return Results.ValidationProblem(results
-            .GroupBy(r => r.MemberNames.FirstOrDefault() ?? string.Empty)
-            .ToDictionary(g => g.Key, g => g.Select(r => r.ErrorMessage!).ToArray()));
     }
 }

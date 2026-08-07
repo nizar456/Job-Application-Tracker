@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Backend.Data;
 using Backend.Endpoints;
 using Backend.Models;
@@ -15,6 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -71,6 +77,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddSingleton<TokenService>();
+builder.Services.AddScoped<JobApplicationService>();
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
@@ -87,6 +94,7 @@ app.UseAuthorization();
 
 app.MapHealthChecks("/health").AllowAnonymous();
 app.MapAuthEndpoints();
+app.MapJobApplicationEndpoints();
 
 var summaries = new[]
 {
