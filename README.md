@@ -62,18 +62,33 @@ createdb inventorydb
 Option B — Docker:
 
 ```sh
-docker run --name jobtracker-db -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=inventorydb -p 5432:5432 -d postgres:17
+docker run --name jobtracker-db -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=JobApplicationDB -p 5432:5432 -d postgres:17
 ```
 
 The development connection string is read from `Backend/appsettings.Development.json`:
 
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Host=localhost;Port=5432;Database=inventorydb;Username=fikhanenizar;Password=admin"
+  "DefaultConnection": "Host=localhost;Port=5432;Database=JobApplicationDB;Username=fikhanenizar;Password=admin"
 }
 ```
 
 Keep real secrets out of source control. Override the connection string in production via environment variables (e.g. `ConnectionStrings__DefaultConnection`) or user secrets, never in `appsettings.json`.
+
+### JWT configuration
+
+Authentication uses ASP.NET Core Identity and JWT bearer tokens. The signing key and token details are read from the `Jwt` section of `Backend/appsettings.Development.json`:
+
+```json
+"Jwt": {
+  "Issuer": "JobApplicationTracker",
+  "Audience": "JobApplicationTracker",
+  "SigningKey": "dev-only-signing-key-change-me-0123456789abcdef",
+  "ExpiryMinutes": 120
+}
+```
+
+The dev signing key is a local-only placeholder; generate a new random key (minimum 32 bytes) for any other environment and override it via `Jwt__SigningKey` or user secrets. Keep it out of source control.
 
 ### Apply database migrations
 
