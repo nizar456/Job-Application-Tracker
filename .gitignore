@@ -1,0 +1,73 @@
+# .NET build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache/options
+*.userprefs
+.vsconfig
+
+# Rider
+.idea/
+.DS_Store
+
+# NuGet
+*.nupkg
+*.nupkg.metadata
+*.snupkg
+packages/
+!**/packages/build/
+
+# Project files
+*.csproj.user
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+*.sc
+
+# Publish
+publish/
+pub/
+binpublish/
+
+# MSBuild
+*.tmp
+*.cache
+
+# Misc
+*.log
+*.pdb
+*.scc
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# Environment files
+.env
+.env.local
