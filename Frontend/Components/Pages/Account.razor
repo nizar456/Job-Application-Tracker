@@ -1,0 +1,19 @@
+@page "/account"
+@attribute [Authorize]
+@using System.Security.Claims
+
+<PageTitle>My account</PageTitle>
+
+<h1>My account</h1>
+
+<AuthorizeView>
+    <Authorized context="state">
+        <dl class="row">
+            <dt class="col-sm-3">User name</dt>
+            <dd class="col-sm-9">@state.User.Identity?.Name</dd>
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@state.User.FindFirst(ClaimTypes.Email)?.Value</dd>
+        </dl>
+        <a class="btn btn-outline-danger" href="logout">Sign out</a>
+    </Authorized>
+</AuthorizeView>

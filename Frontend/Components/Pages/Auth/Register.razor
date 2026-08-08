@@ -1,0 +1,86 @@
+@page "/register"
+@using System.ComponentModel.DataAnnotations
+@inject AuthClient AuthClient
+@inject ApiAuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Register</PageTitle>
+
+<h1>Register</h1>
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+}
+
+<EditForm Model="@_model" OnValidSubmit="HandleRegisterAsync" FormName="register">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label for="register-username" class="form-label">User name</label>
+        <InputText id="register-username" class="form-control" @bind-Value="_model.UserName" autocomplete="username" />
+    </div>
+    <div class="mb-3">
+        <label for="register-email" class="form-label">Email</label>
+        <InputText id="register-email" class="form-control" @bind-Value="_model.Email" autocomplete="email" />
+    </div>
+    <div class="mb-3">
+        <label for="register-password" class="form-label">Password</label>
+        <span class="form-text">At least 8 characters with upper and lower case, a number, and a symbol.</span>
+        <InputText id="register-password" class="form-control" type="password" @bind-Value="_model.Password" autocomplete="new-password" />
+    </div>
+    <div class="mb-3">
+        <label for="register-confirm" class="form-label">Confirm password</label>
+        <InputText id="register-confirm" class="form-control" type="password" @bind-Value="_model.ConfirmPassword" autocomplete="new-password" />
+    </div>
+    <button type="submit" class="btn btn-primary" disabled="@_busy">@(_busy ? "Creating account..." : "Create account")</button>
+</EditForm>
+
+<p class="mt-3">
+    Already have an account? <a href="login">Sign in</a>
+</p>
+
+@code {
+    private readonly RegisterForm _model = new();
+    private bool _busy;
+    private string? _error;
+
+    private async Task HandleRegisterAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var auth = await AuthClient.RegisterAsync(new RegisterRequest(_model.UserName!, _model.Email!, _model.Password!));
+            AuthenticationStateProvider.SignIn(auth);
+            Navigation.NavigateTo("/", replace: true);
+        }
+        catch (ApiException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed class RegisterForm
+    {
+        [Required, StringLength(50, MinimumLength = 3)]
+        public string? UserName { get; set; }
+
+        [Required, EmailAddress]
+        public string? Email { get; set; }
+
+        [Required, StringLength(100, MinimumLength = 8)]
+        public string? Password { get; set; }
+
+        [Required, Compare(nameof(Password))]
+        public string? ConfirmPassword { get; set; }
+    }
+}

@@ -1,10 +1,37 @@
 using Frontend.Components;
+using Frontend.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+
+builder.Services.AddScoped<TokenStore>();
+builder.Services.AddScoped<AccessTokenHandler>();
+builder.Services.AddScoped<ApiAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<ApiAuthenticationStateProvider>());
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultChallengeScheme = FrontendAuthenticationDefaults.SchemeName;
+    })
+    .AddScheme<AuthenticationSchemeOptions, FrontendAuthenticationHandler>(
+        FrontendAuthenticationDefaults.SchemeName,
+        _ => { });
+
+var backendBaseUrl = builder.Configuration["BackendApi:BaseUrl"]
+    ?? throw new InvalidOperationException("BackendApi:BaseUrl is not configured.");
+
+builder.Services.AddHttpClient<AuthClient>(client => client.BaseAddress = new Uri(backendBaseUrl));
+
+builder.Services.AddHttpClient<ApiClient>(client => client.BaseAddress = new Uri(backendBaseUrl))
+    .AddHttpMessageHandler(sp => sp.GetRequiredService<AccessTokenHandler>());
 
 var app = builder.Build();
 

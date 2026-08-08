@@ -1,0 +1,26 @@
+@inject NavigationManager NavigationManager
+
+@code {
+    [Parameter, EditorRequired]
+    public string Target { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool IncludeReturnUrl { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        var target = Target;
+        if (IncludeReturnUrl)
+        {
+            var currentPath = new Uri(NavigationManager.Uri).AbsolutePath.TrimStart('/');
+            if (!string.IsNullOrEmpty(currentPath))
+            {
+                target += $"?returnUrl={Uri.EscapeDataString("/" + currentPath)}";
+            }
+        }
+
+        NavigationManager.NavigateTo(target, replace: true);
+    }
+}
