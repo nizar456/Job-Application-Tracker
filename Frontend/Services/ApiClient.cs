@@ -32,6 +32,14 @@ public sealed class ApiClient(HttpClient httpClient)
         await EnsureSuccessAsync(response, cancellationToken);
     }
 
+    public async Task<T> PatchAsync<T>(string uri, object content, CancellationToken cancellationToken = default)
+    {
+        using var response = await httpClient.PatchAsJsonAsync(uri, content, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        return await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken)
+            ?? throw new ApiException("The API returned an empty response.", (int)response.StatusCode);
+    }
+
     public async Task DeleteAsync(string uri, CancellationToken cancellationToken = default)
     {
         using var response = await httpClient.DeleteAsync(uri, cancellationToken);

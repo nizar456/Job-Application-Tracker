@@ -1,0 +1,260 @@
+@page "/applications/{ApplicationId:guid}"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(_application?.RoleTitle ?? "Application")</PageTitle>
+
+@if (_loading)
+{
+    <div class="text-muted" role="status">Loading application...</div>
+}
+else if (_application is null)
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+    <a class="btn btn-outline-secondary" href="applications">Back to applications</a>
+}
+else
+{
+    var application = _application;
+
+    <div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+        <div>
+            <h1 class="h3 mb-1">@application.RoleTitle</h1>
+            <div class="text-muted">
+                @application.CompanyName
+                @if (!string.IsNullOrEmpty(application.Location))
+                {
+                    <span class="ms-2">@application.Location</span>
+                }
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary" href="@($"applications/{application.Id}/edit")">Edit</a>
+            @if (_confirmingDelete)
+            {
+                <div class="d-inline-flex align-items-center gap-2">
+                    <span class="text-danger">Delete this application?</span>
+                    <button type="button" class="btn btn-danger btn-sm" @onclick="ConfirmDeleteAsync">Delete</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="CancelDelete">Cancel</button>
+                </div>
+            }
+            else
+            {
+                <button type="button" class="btn btn-outline-danger" @onclick="StartDelete">Delete</button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_successMessage))
+    {
+        <div class="alert alert-success" role="status">@_successMessage</div>
+    }
+
+    @if (!string.IsNullOrEmpty(_deleteError))
+    {
+        <div class="alert alert-danger" role="alert">@_deleteError</div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-7">
+            <div class="card h-100">
+                <div class="card-header">Details</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8"><span class="badge @application.Status.BadgeClass()">@application.Status.DisplayName()</span></dd>
+
+                        <dt class="col-sm-4">Company</dt>
+                        <dd class="col-sm-8">@application.CompanyName</dd>
+
+                        <dt class="col-sm-4">Work mode</dt>
+                        <dd class="col-sm-8">@application.WorkMode.DisplayName()</dd>
+
+                        <dt class="col-sm-4">Date applied</dt>
+                        <dd class="col-sm-8">@application.DateApplied.ToString("dd MMM yyyy")</dd>
+
+                        <dt class="col-sm-4">CV version</dt>
+                        <dd class="col-sm-8">@(application.ResumeVersionName ?? "None")</dd>
+
+                        <dt class="col-sm-4">Source</dt>
+                        <dd class="col-sm-8">@(application.Source ?? "Not set")</dd>
+
+                        <dt class="col-sm-4">Job posting</dt>
+                        <dd class="col-sm-8">
+                            @if (!string.IsNullOrEmpty(application.JobUrl))
+                            {
+                                <a href="@application.JobUrl" target="_blank" rel="noopener noreferrer">Open job posting</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not set</span>
+                            }
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-5">
+            <div class="card h-100">
+                <div class="card-header">Change status</div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(_changeError))
+                    {
+                        <div class="alert alert-danger" role="alert">@_changeError</div>
+                    }
+                    <div class="mb-3">
+                        <label for="detail-new-status" class="form-label">New status</label>
+                        <select id="detail-new-status" class="form-select" @bind="_newStatus">
+                            @foreach (var status in Enum.GetValues<ApplicationStatus>().Where(s => s != application.Status))
+                            {
+                                <option value="@status.ToString()">@status.DisplayName()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="detail-status-note" class="form-label">Note <span class="text-muted">(optional)</span></label>
+                        <textarea id="detail-status-note" class="form-control" rows="2" @bind="_statusNote"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" @onclick="ChangeStatusAsync" disabled="@_changingStatus">
+                        @(_changingStatus ? "Updating..." : "Update status")
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(application.JobDescription))
+        {
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">Job description</div>
+                    <div class="card-body">
+                        <p class="mb-0 text-break">@application.JobDescription</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(application.Notes))
+        {
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">Notes</div>
+                    <div class="card-body">
+                        <p class="mb-0 text-break">@application.Notes</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Tags</div>
+                <div class="card-body">
+                    @if (application.Tags.Count == 0)
+                    {
+                        <span class="text-muted">No tags.</span>
+                    }
+                    else
+                    {
+                        @foreach (var tag in application.Tags)
+                        {
+                            <span class="badge text-bg-light border me-1">@tag.Name</span>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 text-muted small">
+            Created @application.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm") &middot; Last updated @application.UpdatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private JobApplicationResponse? _application;
+    private ApplicationStatus _newStatus;
+    private string _statusNote = string.Empty;
+    private bool _loading = true;
+    private bool _changingStatus;
+    private bool _confirmingDelete;
+    private string? _error;
+    private string? _successMessage;
+    private string? _changeError;
+    private string? _deleteError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _application = await Api.GetAsync<JobApplicationResponse>($"applications/{ApplicationId}");
+            _newStatus = NextStatus(_application.Status);
+        }
+        catch (ApiException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static ApplicationStatus NextStatus(ApplicationStatus current) =>
+        Enum.GetValues<ApplicationStatus>()
+            .Where(s => s != current)
+            .OrderBy(s => s)
+            .FirstOrDefault(current);
+
+    private async Task ChangeStatusAsync()
+    {
+        if (_changingStatus)
+        {
+            return;
+        }
+
+        _changingStatus = true;
+        _changeError = null;
+        _successMessage = null;
+        try
+        {
+            var selectedStatus = _newStatus;
+            _application = await Api.PatchAsync<JobApplicationResponse>(
+                $"applications/{ApplicationId}/status",
+                new ChangeStatusRequest(_newStatus, string.IsNullOrWhiteSpace(_statusNote) ? null : _statusNote));
+            _statusNote = string.Empty;
+            _newStatus = NextStatus(selectedStatus);
+            _successMessage = $"Status updated to {selectedStatus.DisplayName().ToLower()}.";
+        }
+        catch (ApiException ex)
+        {
+            _changeError = ex.Message;
+        }
+        finally
+        {
+            _changingStatus = false;
+        }
+    }
+
+    private void StartDelete() => _confirmingDelete = true;
+
+    private void CancelDelete() => _confirmingDelete = false;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync($"applications/{ApplicationId}");
+            Navigation.NavigateTo("applications");
+        }
+        catch (ApiException ex)
+        {
+            _deleteError = ex.Message;
+            _confirmingDelete = false;
+        }
+    }
+}

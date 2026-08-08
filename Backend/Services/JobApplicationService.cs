@@ -206,6 +206,16 @@ public class JobApplicationService(ApplicationDbContext db)
 
     private static IQueryable<JobApplication> ApplyFilters(IQueryable<JobApplication> query, JobApplicationQuery filter)
     {
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var search = filter.Search.Trim().ToLower();
+            query = query.Where(j =>
+                j.RoleTitle.ToLower().Contains(search)
+                || (j.Location ?? string.Empty).ToLower().Contains(search)
+                || (j.Source ?? string.Empty).ToLower().Contains(search)
+                || j.Company.Name.ToLower().Contains(search));
+        }
+
         if (filter.Status is not null)
         {
             query = query.Where(j => j.Status == filter.Status.Value);

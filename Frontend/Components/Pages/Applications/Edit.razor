@@ -1,0 +1,90 @@
+@page "/applications/{ApplicationId:guid}/edit"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Edit application</PageTitle>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="h3 mb-0">Edit application</h1>
+    <a class="btn btn-outline-secondary" href="@($"applications/{ApplicationId}")">Cancel</a>
+</div>
+
+@if (_loading)
+{
+    <div class="text-muted" role="status">Loading application...</div>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+    <a class="btn btn-outline-secondary" href="applications">Back to applications</a>
+}
+else
+{
+    <ApplicationForm
+        Model="_model!"
+        FormName="application-edit"
+        Legend="Application details"
+        SubmitLabel="Save changes"
+        SubmitBusyLabel="Saving..."
+        OnSubmit="HandleSubmitAsync"
+        ServerErrors="_serverErrors"
+        ErrorMessage="_submitError" />
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private ApplicationFormModel? _model;
+    private IReadOnlyDictionary<string, string[]>? _serverErrors;
+    private string? _error;
+    private string? _submitError;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var application = await Api.GetAsync<JobApplicationResponse>($"applications/{ApplicationId}");
+            _model = new ApplicationFormModel
+            {
+                CompanyId = application.CompanyId,
+                ResumeVersionId = application.ResumeVersionId,
+                RoleTitle = application.RoleTitle,
+                Location = application.Location,
+                WorkMode = application.WorkMode,
+                JobUrl = application.JobUrl,
+                Source = application.Source,
+                JobDescription = application.JobDescription,
+                DateApplied = application.DateApplied,
+                Status = application.Status,
+                Notes = application.Notes,
+                SelectedTagIds = application.Tags.Select(t => t.Id).ToHashSet(),
+            };
+        }
+        catch (ApiException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task HandleSubmitAsync(ApplicationFormModel model)
+    {
+        _serverErrors = null;
+        _submitError = null;
+        try
+        {
+            await Api.PutAsync($"applications/{ApplicationId}", model.ToRequest());
+            Navigation.NavigateTo($"/applications/{ApplicationId}");
+        }
+        catch (ApiException ex)
+        {
+            _serverErrors = ex.Errors is { Count: > 0 } ? ex.Errors : null;
+            _submitError = _serverErrors is null ? ex.Message : null;
+        }
+    }
+}

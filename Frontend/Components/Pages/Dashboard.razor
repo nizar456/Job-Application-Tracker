@@ -1,0 +1,167 @@
+@page "/dashboard"
+@attribute [Authorize]
+@inject ApiClient Api
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1 class="h3">Dashboard</h1>
+
+@if (_loading)
+{
+    <div class="text-muted" role="status">Loading dashboard...</div>
+}
+else if (_dashboard is null)
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+}
+else
+{
+    var dashboard = _dashboard;
+    var maxMonthly = dashboard.ApplicationsPerMonth.Count == 0
+        ? 1
+        : dashboard.ApplicationsPerMonth.Max(m => m.Count);
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card text-bg-primary h-100">
+                <div class="card-body">
+                    <div class="h5 mb-0">@dashboard.TotalCount</div>
+                    <div class="small">Total applications</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card text-bg-success h-100">
+                <div class="card-body">
+                    <div class="h5 mb-0">@dashboard.ActiveCount</div>
+                    <div class="small">Active applications</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="h5 mb-0">@ResponseRatePercent%</div>
+                    <div class="small">Response rate (@dashboard.ResponseRate.RespondedCount of @dashboard.ResponseRate.BaseCount eligible)</div>
+                    <div class="progress mt-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@ResponseRatePercent" aria-label="Response rate">
+                        <div class="progress-bar" style="width: @ResponseRatePercent%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">Applications by status</div>
+                <div class="card-body">
+                    @if (dashboard.ApplicationsByStatus.Count == 0)
+                    {
+                        <p class="text-muted mb-0">No applications yet.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var item in dashboard.ApplicationsByStatus)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <a class="text-decoration-none" href="@($"applications?status={item.Status}")">@item.Status.DisplayName()</a>
+                                    <span class="badge @item.Status.BadgeClass()">@item.Count</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">Recent applications</div>
+                <div class="card-body">
+                    @if (dashboard.RecentApplications.Count == 0)
+                    {
+                        <p class="text-muted mb-0">
+                            No applications yet. <a href="applications/create">Create one</a>.
+                        </p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var recent in dashboard.RecentApplications)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                                    <a class="text-decoration-none" href="@($"applications/{recent.Id}")">
+                                        <div class="fw-semibold">@recent.RoleTitle</div>
+                                        <div class="small text-muted">@recent.CompanyName &middot; @recent.DateApplied.ToString("dd MMM yyyy")</div>
+                                    </a>
+                                    <span class="badge @recent.Status.BadgeClass()">@recent.Status.DisplayName()</span>
+                                </li>
+                            }
+                        </ul>
+                        <div class="mt-3">
+                            <a href="applications">View all applications</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Applications per month</div>
+                <div class="card-body">
+                    @if (dashboard.ApplicationsPerMonth.Count == 0)
+                    {
+                        <p class="text-muted mb-0">No applications yet.</p>
+                    }
+                    else
+                    {
+                        @foreach (var month in dashboard.ApplicationsPerMonth)
+                        {
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>@FormatMonth(month.YearMonth)</span>
+                                    <span>@month.Count</span>
+                                </div>
+                                <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="@maxMonthly" aria-valuenow="@month.Count" aria-label="Applications in @month.YearMonth">
+                                    <div class="progress-bar" style="width: @(month.Count * 100 / maxMonthly)%;"></div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private DashboardResponse? _dashboard;
+    private bool _loading = true;
+    private string? _error;
+
+    private int ResponseRatePercent => _dashboard is null ? 0 : (int)Math.Round(_dashboard.ResponseRate.Ratio * 100);
+
+    private static string FormatMonth(string yearMonth) =>
+        DateTime.TryParseExact(yearMonth, "yyyy-MM", null, System.Globalization.DateTimeStyles.None, out var date)
+            ? date.ToString("MMM yyyy")
+            : yearMonth;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _dashboard = await Api.GetAsync<DashboardResponse>("dashboard");
+        }
+        catch (ApiException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

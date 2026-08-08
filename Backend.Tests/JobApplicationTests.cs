@@ -331,6 +331,33 @@ public class JobApplicationTests : IClassFixture<BackendApiFactory>
     }
 
     [Fact]
+    public async Task List_SearchesByRole_Company_Location_Source()
+    {
+        var (token, userId, _) = await RegisterUserAsync();
+        var acme = await SeedCompanyAsync(userId, "Acme Corp");
+        var globex = await SeedCompanyAsync(userId, "Globex");
+
+        await CreateApplicationAsync(
+            token, acme, roleTitle: "Backend Engineer", location: "Berlin", source: "LinkedIn");
+        await CreateApplicationAsync(
+            token, globex, roleTitle: "Product Manager", location: "London", source: "acme referral");
+
+        var byRole = await ListAsync(token, "search=backend");
+        Assert.Single(byRole.Items);
+        Assert.Equal("Backend Engineer", byRole.Items[0].RoleTitle);
+
+        var byCompany = await ListAsync(token, "search=globex");
+        Assert.Single(byCompany.Items);
+        Assert.Equal("Product Manager", byCompany.Items[0].RoleTitle);
+
+        var byLocation = await ListAsync(token, "search=london");
+        Assert.Single(byLocation.Items);
+
+        var bySource = await ListAsync(token, "search=referral");
+        Assert.Single(bySource.Items);
+    }
+
+    [Fact]
     public async Task List_FiltersByStatus_Company_Role_Location_Source()
     {
         var (token, userId, _) = await RegisterUserAsync();

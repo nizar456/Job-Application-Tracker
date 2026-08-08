@@ -1,0 +1,353 @@
+@page "/applications"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.WebUtilities
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Applications</PageTitle>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="h3 mb-0">Applications</h1>
+    <a class="btn btn-primary" href="applications/create">New application</a>
+</div>
+
+@if (!string.IsNullOrEmpty(_loadError))
+{
+    <div class="alert alert-danger" role="alert">@_loadError</div>
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-lg-5">
+                <label for="filter-search" class="form-label">Search</label>
+                <input id="filter-search" class="form-control" @bind="Search" placeholder="Role, company, location, source" aria-describedby="filter-search-help" />
+                <div id="filter-search-help" class="form-text">Matches role, company, location and source.</div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <label for="filter-status" class="form-label">Status</label>
+                <select id="filter-status" class="form-select" @bind="StatusValue">
+                    <option value="">All statuses</option>
+                    @foreach (var status in Enum.GetValues<ApplicationStatus>())
+                    {
+                        <option value="@status.ToString()">@status.DisplayName()</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-lg-4">
+                <label for="filter-company" class="form-label">Company</label>
+                <select id="filter-company" class="form-select" @bind="CompanyValue">
+                    <option value="">All companies</option>
+                    @foreach (var company in _companies)
+                    {
+                        <option value="@company.Id">@company.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label for="filter-from" class="form-label">From date</label>
+                <input id="filter-from" class="form-control" type="date" @bind="_fromDate" />
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label for="filter-to" class="form-label">To date</label>
+                <input id="filter-to" class="form-control" type="date" @bind="_toDate" />
+            </div>
+            <div class="col-12 col-md-3 col-lg-2">
+                <label for="filter-page-size" class="form-label">Per page</label>
+                <select id="filter-page-size" class="form-select" @bind="PageSizeValue">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 d-flex gap-2">
+                <button type="button" class="btn btn-primary" @onclick="ApplyFilters">Apply filters</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="ClearFilters">Reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="text-muted" role="status">Loading applications...</div>
+}
+else if (_result is null)
+{
+    <div class="alert alert-warning" role="alert">Nothing to show yet.</div>
+}
+else if (_result.TotalCount == 0)
+{
+    <div class="alert alert-info mb-3" role="status">
+        No applications match your filters.
+        <a href="applications/create">Create your first application</a>.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <caption class="visually-hidden">Your job applications</caption>
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByRole">
+                            Role @SortIndicator("role")
+                        </button>
+                    </th>
+                    <th scope="col">
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByCompany">
+                            Company @SortIndicator("company")
+                        </button>
+                    </th>
+                    <th scope="col" class="d-none d-md-table-cell">Location</th>
+                    <th scope="col">
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByStatus">
+                            Status @SortIndicator("status")
+                        </button>
+                    </th>
+                    <th scope="col" class="text-nowrap">
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByDateApplied">
+                            Date applied @SortIndicator("dateApplied")
+                        </button>
+                    </th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var application in _result.Items)
+                {
+                    <tr>
+                        <td>
+                            <a class="fw-semibold" href="@($"applications/{application.Id}")">@application.RoleTitle</a>
+                        </td>
+                        <td>@application.CompanyName</td>
+                        <td class="d-none d-md-table-cell text-muted">@application.Location</td>
+                        <td><span class="badge @application.Status.BadgeClass()">@application.Status.DisplayName()</span></td>
+                        <td class="text-nowrap">@application.DateApplied.ToString("dd MMM yyyy")</td>
+                        <td class="text-nowrap text-end">
+                            <a class="btn btn-sm btn-outline-primary" href="@($"applications/{application.Id}")">View</a>
+                            <a class="btn btn-sm btn-outline-secondary" href="@($"applications/{application.Id}/edit")">Edit</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <nav aria-label="Application list pages" class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="text-muted small">
+            Showing @((_result.Page - 1) * _result.PageSize + 1)&ndash;@(Math.Min(_result.Page * _result.PageSize, _result.TotalCount)) of @_result.TotalCount
+        </div>
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item @(HasPrevious ? "" : "disabled")">
+                <button type="button" class="page-link" @onclick="GoToPreviousPage" aria-label="Previous page">Previous</button>
+            </li>
+            @foreach (var pageNumber in PageNumbers)
+            {
+                if (pageNumber == PageEllipsis)
+                {
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                }
+                else
+                {
+                    <li class="page-item @(pageNumber == Page ? "active" : "")">
+                        <button type="button" class="page-link" @onclick="() => GoToPage(pageNumber)" aria-current="@(AriaCurrent(pageNumber))">@pageNumber</button>
+                    </li>
+                }
+            }
+            <li class="page-item @(HasNext ? "" : "disabled")">
+                <button type="button" class="page-link" @onclick="GoToNextPage" aria-label="Next page">Next</button>
+            </li>
+        </ul>
+    </nav>
+}
+
+@code {
+    [SupplyParameterFromQuery] public int? Page { get; set; }
+    [SupplyParameterFromQuery] public int? PageSizeValue { get; set; }
+    [SupplyParameterFromQuery] public string? Search { get; set; }
+    [SupplyParameterFromQuery] public string? StatusValue { get; set; }
+    [SupplyParameterFromQuery] public string? CompanyValue { get; set; }
+    [SupplyParameterFromQuery] public string? FromDateValue { get; set; }
+    [SupplyParameterFromQuery] public string? ToDateValue { get; set; }
+    [SupplyParameterFromQuery] public string? SortBy { get; set; }
+    [SupplyParameterFromQuery] public string? SortDirection { get; set; }
+
+    private const int DefaultPageSize = 20;
+    private const int PageEllipsis = 0;
+
+    private PagedResponse<JobApplicationResponse>? _result;
+    private IReadOnlyList<CompanyResponse> _companies = [];
+    private string? _loadError;
+    private bool _loading;
+    private string? _lastQuery;
+    private DateOnly? _fromDate;
+    private DateOnly? _toDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _companies = (await Api.GetAsync<List<CompanyResponse>>("companies"))
+            .OrderBy(c => c.Name)
+            .ToList();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var query = Navigation.ToAbsoluteUri(Navigation.Uri).Query;
+        if (query == _lastQuery)
+        {
+            return;
+        }
+
+        _lastQuery = query;
+        _fromDate = DateOnly.TryParse(FromDateValue, out var fromDate) ? fromDate : null;
+        _toDate = DateOnly.TryParse(ToDateValue, out var toDate) ? toDate : null;
+        await LoadApplicationsAsync();
+    }
+
+    private bool HasPrevious => _result is { Page: > 1 };
+
+    private bool HasNext => _result is not null && _result.Page < _result.TotalPages;
+
+    private IEnumerable<int> PageNumbers
+    {
+        get
+        {
+            if (_result is null)
+            {
+                return [];
+            }
+
+            var total = _result.TotalPages;
+            var current = _result.Page;
+            if (total <= 7)
+            {
+                return Enumerable.Range(1, total);
+            }
+
+            var pages = new HashSet<int> { 1, total, current - 1, current, current + 1 };
+            var ordered = pages.Where(p => p >= 1 && p <= total).OrderBy(p => p).ToList();
+            var result = new List<int>();
+            var previous = 0;
+            foreach (var page in ordered)
+            {
+                if (previous + 1 < page)
+                {
+                    result.Add(PageEllipsis);
+                }
+
+                result.Add(page);
+                previous = page;
+            }
+
+            return result;
+        }
+    }
+
+    private string SortIndicator(string column) =>
+        SortBy?.Equals(column, StringComparison.OrdinalIgnoreCase) == true
+            ? (SortDirection == "asc" ? "▲" : "▼")
+            : "";
+
+    private string? AriaCurrent(int pageNumber) =>
+        pageNumber == Page ? "page" : null;
+
+    private void SortByRole() => SortByColumn("role");
+
+    private void SortByCompany() => SortByColumn("company");
+
+    private void SortByStatus() => SortByColumn("status");
+
+    private void SortByDateApplied() => SortByColumn("dateApplied");
+
+    private async Task LoadApplicationsAsync()
+    {
+        _loading = true;
+        _loadError = null;
+        try
+        {
+            var query = BuildApiQuery();
+            _result = await Api.GetAsync<PagedResponse<JobApplicationResponse>>($"applications?{query}");
+        }
+        catch (ApiException ex)
+        {
+            _loadError = ex.Message;
+            _result = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string BuildApiQuery()
+    {
+        var parameters = new Dictionary<string, string?>
+        {
+            ["page"] = Page is > 1 ? Page.ToString() : null,
+            ["pageSize"] = (PageSizeValue ?? DefaultPageSize) != DefaultPageSize ? (PageSizeValue ?? DefaultPageSize).ToString() : null,
+            ["search"] = string.IsNullOrWhiteSpace(Search) ? null : Search,
+            ["status"] = Enum.TryParse<ApplicationStatus>(StatusValue, true, out var status) ? status.ToString() : null,
+            ["companyId"] = Guid.TryParse(CompanyValue, out var companyId) ? companyId.ToString() : null,
+            ["fromDate"] = _fromDate?.ToString("yyyy-MM-dd"),
+            ["toDate"] = _toDate?.ToString("yyyy-MM-dd"),
+            ["sortBy"] = string.IsNullOrWhiteSpace(SortBy) ? null : SortBy,
+            ["sortDirection"] = string.IsNullOrWhiteSpace(SortDirection) ? null : SortDirection,
+        };
+
+        return string.Join("&", parameters
+            .Where(pair => !string.IsNullOrWhiteSpace(pair.Value))
+            .Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value!)}"));
+    }
+
+    private void NavigateWithQuery()
+    {
+        Navigation.NavigateTo($"/applications?{BuildApiQuery()}", replace: true);
+    }
+
+    private void ApplyFilters()
+    {
+        Page = null;
+        NavigateWithQuery();
+    }
+
+    private void ClearFilters()
+    {
+        Search = null;
+        StatusValue = null;
+        CompanyValue = null;
+        _fromDate = null;
+        _toDate = null;
+        SortBy = null;
+        SortDirection = null;
+        Page = null;
+        NavigateWithQuery();
+    }
+
+    private void SortByColumn(string column)
+    {
+        if (string.Equals(SortBy, column, StringComparison.OrdinalIgnoreCase))
+        {
+            SortDirection = SortDirection == "asc" ? "desc" : "asc";
+        }
+        else
+        {
+            SortBy = column;
+            SortDirection = "desc";
+        }
+
+        Page = null;
+        NavigateWithQuery();
+    }
+
+    private void GoToPage(int pageNumber)
+    {
+        Page = pageNumber;
+        NavigateWithQuery();
+    }
+
+    private void GoToPreviousPage() => GoToPage(_result!.Page - 1);
+
+    private void GoToNextPage() => GoToPage(_result!.Page + 1);
+}
