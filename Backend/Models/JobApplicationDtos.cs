@@ -23,6 +23,12 @@ public record ChangeStatusRequest(
     [property: EnumDataType(typeof(ApplicationStatus))] ApplicationStatus Status,
     [property: StringLength(1000)] string? Note);
 
+public record StatusHistoryResponse(
+    Guid Id,
+    ApplicationStatus Status,
+    string? Note,
+    DateTime ChangedAtUtc);
+
 public record JobApplicationResponse(
     Guid Id,
     Guid CompanyId,
@@ -40,6 +46,7 @@ public record JobApplicationResponse(
     string? Notes,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
-    IReadOnlyList<TagResponse> Tags);
+    IReadOnlyList<TagResponse> Tags,
+    IReadOnlyList<StatusHistoryResponse> StatusHistory);
 
 public record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount, int TotalPages);

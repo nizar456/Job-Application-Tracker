@@ -88,6 +88,12 @@ public record JobApplicationRequest(
 
 public record ChangeStatusRequest(ApplicationStatus Status, string? Note);
 
+public record StatusHistoryResponse(
+    Guid Id,
+    ApplicationStatus Status,
+    string? Note,
+    DateTime ChangedAtUtc);
+
 public record JobApplicationResponse(
     Guid Id,
     Guid CompanyId,
@@ -105,13 +111,38 @@ public record JobApplicationResponse(
     string? Notes,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
-    IReadOnlyList<TagResponse> Tags);
+    IReadOnlyList<TagResponse> Tags,
+    IReadOnlyList<StatusHistoryResponse> StatusHistory);
 
 public record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount, int TotalPages);
 
+public record CompanyRequest(string Name, string? Website);
+
 public record CompanyResponse(Guid Id, string Name, string? Website, DateTime CreatedAtUtc);
 
+public record ResumeVersionRequest(string Name);
+
 public record ResumeVersionResponse(Guid Id, string Name, DateTime CreatedAtUtc);
+
+public record TagRequest(string Name);
+
+public record ContactRequest(
+    string? Name,
+    string? Email,
+    string? Phone,
+    string? Role,
+    string? Notes);
+
+public record ContactResponse(
+    Guid Id,
+    Guid JobApplicationId,
+    string? Name,
+    string? Email,
+    string? Phone,
+    string? Role,
+    string? Notes);
+
+public sealed record ResourceItem(Guid Id, string Name, string? Secondary);
 
 public record DashboardResponse(
     int TotalCount,

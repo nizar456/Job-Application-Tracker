@@ -124,6 +124,22 @@ else
             </div>
         </div>
 
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Status timeline</div>
+                <div class="card-body">
+                    @if (application.StatusHistory.Count == 0)
+                    {
+                        <span class="text-muted">No status changes yet.</span>
+                    }
+                    else
+                    {
+                        <StatusTimeline History="application.StatusHistory" />
+                    }
+                </div>
+            </div>
+        </div>
+
         @if (!string.IsNullOrEmpty(application.JobDescription))
         {
             <div class="col-12">
@@ -165,6 +181,10 @@ else
                     }
                 </div>
             </div>
+        </div>
+
+        <div class="col-12">
+            <ContactsSection ApplicationId="application.Id" />
         </div>
 
         <div class="col-12 text-muted small">

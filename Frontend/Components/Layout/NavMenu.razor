@@ -32,6 +32,24 @@
             </NavLink>
         </div>
 
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="companies">
+                <span class="bi bi-building" aria-hidden="true"></span> Companies
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="resume-versions">
+                <span class="bi bi-file-earmark-text" aria-hidden="true"></span> CV versions
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="tags">
+                <span class="bi bi-tags" aria-hidden="true"></span> Tags
+            </NavLink>
+        </div>
+
         <AuthorizeView>
             <Authorized context="state">
                 <div class="nav-item px-3 small text-muted">Signed in as @state.User.Identity?.Name</div>

@@ -1,0 +1,37 @@
+@page "/companies"
+@attribute [Authorize]
+@inject ApiClient Api
+
+<ResourceManager
+    Title="Companies"
+    Noun="company"
+    NewLabel="New company"
+    FormName="companies-form"
+    HasSecondary="true"
+    SecondaryLabel="Website"
+    SecondaryServerField="Website"
+    LoadItems="LoadAsync"
+    SaveItem="SaveAsync"
+    DeleteItem="DeleteAsync" />
+
+@code {
+    private async Task<IReadOnlyList<ResourceItem>> LoadAsync() =>
+        (await Api.GetAsync<List<CompanyResponse>>("companies"))
+            .Select(c => new ResourceItem(c.Id, c.Name, c.Website))
+            .ToList();
+
+    private async Task SaveAsync(Guid? id, string name, string? secondary)
+    {
+        var website = string.IsNullOrWhiteSpace(secondary) ? null : secondary.Trim();
+        if (id is null)
+        {
+            await Api.PostAsync<CompanyResponse>("companies", new CompanyRequest(name, website));
+        }
+        else
+        {
+            await Api.PutAsync($"companies/{id}", new CompanyRequest(name, website));
+        }
+    }
+
+    private async Task DeleteAsync(Guid id) => await Api.DeleteAsync($"companies/{id}");
+}

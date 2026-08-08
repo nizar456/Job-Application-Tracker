@@ -1,0 +1,270 @@
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>@Title</PageTitle>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="h3 mb-0">@Title</h1>
+    <button type="button" class="btn btn-primary" @onclick="OpenCreate">@NewLabel</button>
+</div>
+
+@if (!string.IsNullOrEmpty(_loadError))
+{
+    <div class="alert alert-danger" role="alert">@_loadError</div>
+}
+
+@if (_loading)
+{
+    <div class="text-muted" role="status">Loading @(Title.ToLower())...</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <caption class="visually-hidden">Your @(Title.ToLower())</caption>
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Name</th>
+                    @if (HasSecondary)
+                    {
+                        <th scope="col">@SecondaryLabel</th>
+                    }
+                    <th scope="col" class="text-end"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@(HasSecondary ? 3 : 2)" class="text-muted">No records yet.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in _items)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@item.Name</td>
+                            @if (HasSecondary)
+                            {
+                                <td class="text-muted">@item.Secondary</td>
+                            }
+                            <td class="text-nowrap text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => OpenEdit(item)">Edit</button>
+                                @if (_deleteId == item.Id)
+                                {
+                                    <span class="text-danger ms-2">Delete this @Noun?</span>
+                                    <button type="button" class="btn btn-sm btn-danger" @onclick="() => ConfirmDeleteAsync(item.Id)">Delete</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelDelete">Cancel</button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => StartDelete(item.Id)">Delete</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_deleteError))
+    {
+        <div class="alert alert-danger" role="alert">@_deleteError</div>
+    }
+}
+
+@if (_dialogOpen)
+{
+    <div class="modal fade" style="display:block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <EditForm Model="_form" OnValidSubmit="SaveAsync" FormName="@FormName">
+                    <DataAnnotationsValidator />
+                    <CascadingValue Value="@(_serverErrors ?? NoErrors)" TValue="IReadOnlyDictionary<string, string[]>">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5">@(_editingId is null ? $"New {Noun}" : $"Edit {Noun}")</h1>
+                            <button type="button" class="btn-close" aria-label="Close" @onclick="CloseDialog"></button>
+                        </div>
+                        <div class="modal-body">
+                            @if (!string.IsNullOrEmpty(_dialogError))
+                            {
+                                <div class="alert alert-danger" role="alert">@_dialogError</div>
+                            }
+                            <div class="mb-3">
+                                <label for="@($"dialog-name-{FormName}")" class="form-label">Name</label>
+                                <InputText id="@($"dialog-name-{FormName}")" class="form-control" @bind-Value="_form.Name" />
+                                <ValidationMessage For="() => _form.Name" />
+                                <ServerValidationMessage Field="Name" />
+                            </div>
+                            @if (HasSecondary)
+                            {
+                                <div class="mb-3">
+                                    <label for="@($"dialog-secondary-{FormName}")" class="form-label">@SecondaryLabel</label>
+                                    <InputText id="@($"dialog-secondary-{FormName}")" class="form-control" @bind-Value="_form.Secondary" />
+                                    <ValidationMessage For="() => _form.Secondary" />
+                                    <ServerValidationMessage Field="@SecondaryServerField" />
+                                </div>
+                            }
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="CloseDialog">Cancel</button>
+                            <button type="submit" class="btn btn-primary" disabled="@_saving">
+                                @(_saving ? "Saving..." : (_editingId is null ? "Create" : "Save changes"))
+                            </button>
+                        </div>
+                    </CascadingValue>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop"></div>
+}
+
+@code {
+    [Parameter, EditorRequired] public required string Title { get; set; }
+
+    [Parameter, EditorRequired] public required string Noun { get; set; }
+
+    [Parameter] public string NewLabel { get; set; } = "New";
+
+    [Parameter, EditorRequired] public required string FormName { get; set; }
+
+    [Parameter] public bool HasSecondary { get; set; }
+
+    [Parameter] public string SecondaryLabel { get; set; } = "Secondary";
+
+    [Parameter] public string SecondaryServerField { get; set; } = "Secondary";
+
+    [Parameter, EditorRequired] public required Func<Task<IReadOnlyList<ResourceItem>>> LoadItems { get; set; }
+
+    [Parameter, EditorRequired] public required Func<Guid?, string, string?, Task> SaveItem { get; set; }
+
+    [Parameter, EditorRequired] public required Func<Guid, Task> DeleteItem { get; set; }
+
+    private static readonly IReadOnlyDictionary<string, string[]> NoErrors = new Dictionary<string, string[]>();
+
+    private List<ResourceItem> _items = [];
+    private bool _loading = true;
+    private bool _saving;
+    private string? _loadError;
+    private string? _deleteError;
+    private string? _dialogError;
+    private IReadOnlyDictionary<string, string[]>? _serverErrors;
+    private bool _dialogOpen;
+    private Guid? _editingId;
+    private Guid? _deleteId;
+    private ResourceFormModel _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadError = null;
+        try
+        {
+            _items = (await LoadItems()).ToList();
+        }
+        catch (ApiException ex)
+        {
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form = new ResourceFormModel();
+        _dialogError = null;
+        _serverErrors = null;
+        _dialogOpen = true;
+    }
+
+    private void OpenEdit(ResourceItem item)
+    {
+        _editingId = item.Id;
+        _form = new ResourceFormModel { Name = item.Name, Secondary = item.Secondary };
+        _dialogError = null;
+        _serverErrors = null;
+        _dialogOpen = true;
+    }
+
+    private void CloseDialog()
+    {
+        _dialogOpen = false;
+        _saving = false;
+        _dialogError = null;
+        _serverErrors = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_saving)
+        {
+            return;
+        }
+
+        _saving = true;
+        _dialogError = null;
+        _serverErrors = null;
+        try
+        {
+            await SaveItem(_editingId, _form.Name.Trim(), _form.Secondary?.Trim() ?? string.Empty);
+            CloseDialog();
+            await LoadAsync();
+        }
+        catch (ApiException ex)
+        {
+            _serverErrors = ex.Errors is { Count: > 0 } ? ex.Errors : null;
+            _dialogError = _serverErrors is null ? ex.Message : null;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void StartDelete(Guid id)
+    {
+        _deleteId = id;
+        _deleteError = null;
+    }
+
+    private void CancelDelete()
+    {
+        _deleteId = null;
+        _deleteError = null;
+    }
+
+    private async Task ConfirmDeleteAsync(Guid id)
+    {
+        try
+        {
+            await DeleteItem(id);
+            _deleteId = null;
+            await LoadAsync();
+        }
+        catch (ApiException ex)
+        {
+            _deleteError = ex.Message;
+            _deleteId = null;
+        }
+    }
+
+    private sealed class ResourceFormModel
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(200, ErrorMessage = "Name cannot be longer than 200 characters.")]
+        public string Name { get; set; } = string.Empty;
+
+        public string? Secondary { get; set; }
+    }
+}

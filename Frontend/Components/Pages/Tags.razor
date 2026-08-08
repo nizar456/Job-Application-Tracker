@@ -1,0 +1,33 @@
+@page "/tags"
+@attribute [Authorize]
+@inject ApiClient Api
+
+<ResourceManager
+    Title="Tags"
+    Noun="tag"
+    NewLabel="New tag"
+    FormName="tags-form"
+    LoadItems="LoadAsync"
+    SaveItem="SaveAsync"
+    DeleteItem="DeleteAsync" />
+
+@code {
+    private async Task<IReadOnlyList<ResourceItem>> LoadAsync() =>
+        (await Api.GetAsync<List<TagResponse>>("tags"))
+            .Select(t => new ResourceItem(t.Id, t.Name, null))
+            .ToList();
+
+    private async Task SaveAsync(Guid? id, string name, string? secondary)
+    {
+        if (id is null)
+        {
+            await Api.PostAsync<TagResponse>("tags", new TagRequest(name.Trim()));
+        }
+        else
+        {
+            await Api.PutAsync($"tags/{id}", new TagRequest(name.Trim()));
+        }
+    }
+
+    private async Task DeleteAsync(Guid id) => await Api.DeleteAsync($"tags/{id}");
+}

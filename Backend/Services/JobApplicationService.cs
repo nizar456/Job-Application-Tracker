@@ -202,6 +202,7 @@ public class JobApplicationService(ApplicationDbContext db)
             .Include(j => j.ResumeVersion)
             .Include(j => j.ApplicationTags)
             .ThenInclude(t => t.Tag)
+            .Include(j => j.StatusHistory)
             .Where(j => j.UserId == userId);
 
     private static IQueryable<JobApplication> ApplyFilters(IQueryable<JobApplication> query, JobApplicationQuery filter)
@@ -303,6 +304,10 @@ public class JobApplicationService(ApplicationDbContext db)
         application.ApplicationTags
             .Select(t => new TagResponse(t.Tag.Id, t.Tag.Name))
             .OrderBy(t => t.Name)
+            .ToList(),
+        application.StatusHistory
+            .OrderBy(h => h.ChangedAtUtc)
+            .Select(h => new StatusHistoryResponse(h.Id, h.Status, h.Note, h.ChangedAtUtc))
             .ToList());
 
     private async Task<IReadOnlyDictionary<string, string[]>> ValidateApplicationAsync(
