@@ -19,6 +19,10 @@ public record JobApplicationRequest(
 
 public record TagResponse(Guid Id, string Name);
 
+public record ChangeStatusRequest(
+    [property: EnumDataType(typeof(ApplicationStatus))] ApplicationStatus Status,
+    [property: StringLength(1000)] string? Note);
+
 public record JobApplicationResponse(
     Guid Id,
     Guid CompanyId,

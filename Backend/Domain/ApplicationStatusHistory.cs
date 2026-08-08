@@ -8,6 +8,8 @@ public class ApplicationStatusHistory
 
     public ApplicationStatus Status { get; set; }
 
+    public string? Note { get; set; }
+
     public DateTime ChangedAtUtc { get; set; } = DateTime.UtcNow;
 
     public JobApplication JobApplication { get; set; } = null!;

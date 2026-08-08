@@ -13,6 +13,7 @@ public static class JobApplicationEndpoints
         group.MapGet("/{id:guid}", GetAsync);
         group.MapPost("/", CreateAsync);
         group.MapPut("/{id:guid}", UpdateAsync);
+        group.MapPatch("/{id:guid}/status", ChangeStatusAsync);
         group.MapDelete("/{id:guid}", DeleteAsync);
 
         return endpoints;
@@ -72,6 +73,25 @@ public static class JobApplicationEndpoints
 
         var userId = EndpointHelpers.GetUserId(httpContext);
         var result = await service.UpdateAsync(userId, id, request);
+        return result.IsSuccess
+            ? Results.Ok(result.Value)
+            : EndpointHelpers.ToErrorResult(result, "The requested job application was not found.");
+    }
+
+    private static async Task<IResult> ChangeStatusAsync(
+        HttpContext httpContext,
+        Guid id,
+        ChangeStatusRequest request,
+        JobApplicationService service)
+    {
+        var validation = ValidationHelper.Validate(request);
+        if (validation is not null)
+        {
+            return validation;
+        }
+
+        var userId = EndpointHelpers.GetUserId(httpContext);
+        var result = await service.ChangeStatusAsync(userId, id, request);
         return result.IsSuccess
             ? Results.Ok(result.Value)
             : EndpointHelpers.ToErrorResult(result, "The requested job application was not found.");

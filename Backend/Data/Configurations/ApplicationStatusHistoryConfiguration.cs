@@ -13,6 +13,9 @@ public class ApplicationStatusHistoryConfiguration : IEntityTypeConfiguration<Ap
         builder.Property(h => h.Status)
             .HasConversion<int>();
 
+        builder.Property(h => h.Note)
+            .HasMaxLength(1000);
+
         builder.HasIndex(h => new { h.JobApplicationId, h.ChangedAtUtc });
 
         builder.HasOne(h => h.JobApplication)

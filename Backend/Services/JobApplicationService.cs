@@ -138,6 +138,51 @@ public class JobApplicationService(ApplicationDbContext db)
         return CommandResult<JobApplicationResponse>.Ok(MapToResponse(saved));
     }
 
+    public async Task<CommandResult<JobApplicationResponse>> ChangeStatusAsync(
+        string userId,
+        Guid id,
+        ChangeStatusRequest request)
+    {
+        if (!Enum.IsDefined(typeof(ApplicationStatus), request.Status))
+        {
+            return CommandResult<JobApplicationResponse>.Failed(new Dictionary<string, string[]>
+            {
+                [nameof(request.Status)] = ["Status is not a valid value."],
+            });
+        }
+
+        var application = await LoadQuery(userId).FirstOrDefaultAsync(j => j.Id == id);
+        if (application is null)
+        {
+            return CommandResult<JobApplicationResponse>.Missing();
+        }
+
+        if (application.Status == request.Status)
+        {
+            return CommandResult<JobApplicationResponse>.Failed(new Dictionary<string, string[]>
+            {
+                [nameof(request.Status)] = [$"The application is already in status {request.Status}."],
+            });
+        }
+
+        var now = DateTime.UtcNow;
+        application.Status = request.Status;
+        application.UpdatedAtUtc = now;
+
+        application.StatusHistory.Add(new ApplicationStatusHistory
+        {
+            JobApplicationId = application.Id,
+            Status = request.Status,
+            Note = request.Note,
+            ChangedAtUtc = now,
+        });
+
+        await db.SaveChangesAsync();
+
+        var saved = await LoadQuery(userId).AsNoTracking().FirstAsync(j => j.Id == id);
+        return CommandResult<JobApplicationResponse>.Ok(MapToResponse(saved));
+    }
+
     public async Task<CommandResult> DeleteAsync(string userId, Guid id)
     {
         var application = await db.JobApplications.FirstOrDefaultAsync(j => j.Id == id && j.UserId == userId);

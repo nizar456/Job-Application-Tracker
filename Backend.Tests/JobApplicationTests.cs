@@ -168,6 +168,126 @@ public class JobApplicationTests : IClassFixture<BackendApiFactory>
     }
 
     [Fact]
+    public async Task ChangeStatus_OwnedApplication_UpdatesStatusAndRecordsHistoryWithNote()
+    {
+        var (token, userId, _) = await RegisterUserAsync();
+        var companyId = await SeedCompanyAsync(userId, "Acme Corp");
+        var created = await CreateApplicationAsync(token, companyId, status: ApplicationStatus.Saved);
+
+        var response = await _client.PatchAsJsonAsync(
+            $"/applications/{created.Id}/status",
+            new ChangeStatusRequest(ApplicationStatus.Interviewing, "First interview scheduled"),
+            JsonOptions,
+            token);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JobApplicationResponse>(JsonOptions);
+        Assert.NotNull(body);
+        Assert.Equal(ApplicationStatus.Interviewing, body.Status);
+
+        var history = await ReadHistoryAsync(created.Id);
+        Assert.Equal(2, history.Count);
+        Assert.Equal(ApplicationStatus.Saved, history[0].Status);
+        Assert.Null(history[0].Note);
+        Assert.Equal(ApplicationStatus.Interviewing, history[1].Status);
+        Assert.Equal("First interview scheduled", history[1].Note);
+        Assert.NotEqual(default, history[1].ChangedAtUtc);
+        Assert.True(history[1].ChangedAtUtc >= history[0].ChangedAtUtc);
+    }
+
+    [Fact]
+    public async Task ChangeStatus_PreservesPastHistoryRecords()
+    {
+        var (token, userId, _) = await RegisterUserAsync();
+        var companyId = await SeedCompanyAsync(userId, "Acme Corp");
+        var created = await CreateApplicationAsync(token, companyId, status: ApplicationStatus.Saved);
+
+        await _client.PatchAsJsonAsync(
+            $"/applications/{created.Id}/status",
+            new ChangeStatusRequest(ApplicationStatus.Interviewing, "First interview"),
+            JsonOptions,
+            token);
+        await _client.PatchAsJsonAsync(
+            $"/applications/{created.Id}/status",
+            new ChangeStatusRequest(ApplicationStatus.Offer, "Offer received"),
+            JsonOptions,
+            token);
+
+        var history = await ReadHistoryAsync(created.Id);
+        Assert.Equal(3, history.Count);
+
+        Assert.Equal(ApplicationStatus.Saved, history[0].Status);
+        Assert.Null(history[0].Note);
+
+        Assert.Equal(ApplicationStatus.Interviewing, history[1].Status);
+        Assert.Equal("First interview", history[1].Note);
+
+        Assert.Equal(ApplicationStatus.Offer, history[2].Status);
+        Assert.Equal("Offer received", history[2].Note);
+
+        Assert.True(history[2].ChangedAtUtc > history[1].ChangedAtUtc);
+        Assert.True(history[1].ChangedAtUtc > history[0].ChangedAtUtc);
+    }
+
+    [Fact]
+    public async Task ChangeStatus_OtherUsersApplication_ReturnsNotFound()
+    {
+        var (tokenA, userIdA, _) = await RegisterUserAsync();
+        var companyA = await SeedCompanyAsync(userIdA, "Acme Corp");
+        var created = await CreateApplicationAsync(tokenA, companyA, status: ApplicationStatus.Applied);
+
+        var (tokenB, _, _) = await RegisterUserAsync();
+        var response = await _client.PatchAsJsonAsync(
+            $"/applications/{created.Id}/status",
+            new ChangeStatusRequest(ApplicationStatus.Interviewing, null),
+            JsonOptions,
+            tokenB);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var history = await ReadHistoryAsync(created.Id);
+        Assert.Single(history);
+        Assert.Equal(ApplicationStatus.Applied, history[0].Status);
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WithInvalidStatus_ReturnsValidationProblem()
+    {
+        var (token, userId, _) = await RegisterUserAsync();
+        var companyId = await SeedCompanyAsync(userId, "Acme Corp");
+        var created = await CreateApplicationAsync(token, companyId);
+
+        var response = await _client.PatchAsJsonAsync(
+            $"/applications/{created.Id}/status",
+            new { Status = 999, Note = (string?)null },
+            JsonOptions,
+            token);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WithSameStatus_ReturnsValidationProblem()
+    {
+        var (token, userId, _) = await RegisterUserAsync();
+        var companyId = await SeedCompanyAsync(userId, "Acme Corp");
+        var created = await CreateApplicationAsync(token, companyId, status: ApplicationStatus.Applied);
+
+        var response = await _client.PatchAsJsonAsync(
+            $"/applications/{created.Id}/status",
+            new ChangeStatusRequest(ApplicationStatus.Applied, null),
+            JsonOptions,
+            token);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+
+        var history = await ReadHistoryAsync(created.Id);
+        Assert.Single(history);
+    }
+
+    [Fact]
     public async Task Delete_OwnedApplication_DeletesIt()
     {
         var (token, userId, _) = await RegisterUserAsync();
@@ -421,4 +541,8 @@ internal static class HttpClientExtensions
     public static Task<HttpResponseMessage> PutAsJsonAsync<T>(
         this HttpClient client, string url, T value, JsonSerializerOptions options, string token) =>
         client.SendAsync(new HttpRequestMessage(HttpMethod.Put, url) { Content = JsonContent.Create(value, options: options) }.WithAuth(token));
+
+    public static Task<HttpResponseMessage> PatchAsJsonAsync<T>(
+        this HttpClient client, string url, T value, JsonSerializerOptions options, string token) =>
+        client.SendAsync(new HttpRequestMessage(HttpMethod.Patch, url) { Content = JsonContent.Create(value, options: options) }.WithAuth(token));
 }
