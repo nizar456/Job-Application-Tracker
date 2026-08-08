@@ -35,6 +35,18 @@ A private, multi-user web application for keeping job applications organised. It
 
 Keep API endpoints user-scoped: an authenticated user must never read or change another user's applications, companies, CV versions, contacts, or tags.
 
+## Dashboard API
+
+`GET /dashboard` (authenticated) returns the current user's application totals:
+
+- `totalCount` and `activeCount` (total minus archived);
+- `applicationsByStatus` — counts per current status;
+- `recentApplications` — the five most recently applied, newest first;
+- `applicationsPerMonth` — count grouped by `DateApplied` month (ascending);
+- `responseRate` — the ratio of applications with a response to applications where a response is still expected.
+
+**Response rate (MVP definition):** the numerator counts applications currently in `RecruiterContacted`, `Interviewing`, `Offer`, `Rejected`, or `Withdrawn`. The denominator is the number of non-archived applications that are not in `Saved` (that is, `activeCount − saved`). A ratio of `0` is returned when the denominator is zero.
+
 ## Planned domain concepts
 
 | Concept | Responsibility |

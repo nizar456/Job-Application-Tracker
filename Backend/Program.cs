@@ -77,6 +77,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddSingleton<TokenService>();
+builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<JobApplicationService>();
 builder.Services.AddScoped<CompanyService>();
 builder.Services.AddScoped<ResumeVersionService>();
@@ -98,6 +99,7 @@ app.UseAuthorization();
 
 app.MapHealthChecks("/health").AllowAnonymous();
 app.MapAuthEndpoints();
+app.MapDashboardEndpoints();
 app.MapJobApplicationEndpoints();
 app.MapCompanyEndpoints();
 app.MapResumeVersionEndpoints();
