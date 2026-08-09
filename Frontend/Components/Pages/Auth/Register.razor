@@ -3,6 +3,8 @@
 @inject AuthClient AuthClient
 @inject ApiAuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
+@inject ILogger<Register> Logger
+@inject IJSRuntime Js
 
 <PageTitle>Register</PageTitle>
 
@@ -13,24 +15,28 @@
     <div class="alert alert-danger" role="alert">@_error</div>
 }
 
-<EditForm Model="@_model" OnValidSubmit="HandleRegisterAsync" FormName="register">
+<EditForm Model="@_model" OnValidSubmit="HandleRegisterAsync" OnInvalidSubmit="HandleInvalidSubmit" FormName="register">
     <DataAnnotationsValidator />
     <div class="mb-3">
         <label for="register-username" class="form-label">User name</label>
         <InputText id="register-username" class="form-control" @bind-Value="_model.UserName" autocomplete="username" />
+        <ValidationMessage For="() => _model.UserName" />
     </div>
     <div class="mb-3">
         <label for="register-email" class="form-label">Email</label>
         <InputText id="register-email" class="form-control" @bind-Value="_model.Email" autocomplete="email" />
+        <ValidationMessage For="() => _model.Email" />
     </div>
     <div class="mb-3">
         <label for="register-password" class="form-label">Password</label>
         <span class="form-text">At least 8 characters with upper and lower case, a number, and a symbol.</span>
         <InputText id="register-password" class="form-control" type="password" @bind-Value="_model.Password" autocomplete="new-password" />
+        <ValidationMessage For="() => _model.Password" />
     </div>
     <div class="mb-3">
         <label for="register-confirm" class="form-label">Confirm password</label>
         <InputText id="register-confirm" class="form-control" type="password" @bind-Value="_model.ConfirmPassword" autocomplete="new-password" />
+        <ValidationMessage For="() => _model.ConfirmPassword" />
     </div>
     <button type="submit" class="btn btn-primary" disabled="@_busy">@(_busy ? "Creating account..." : "Create account")</button>
 </EditForm>
@@ -44,6 +50,14 @@
     private bool _busy;
     private string? _error;
 
+    private void HandleInvalidSubmit(EditContext editContext)
+    {
+        var errors = editContext.GetValidationMessages().ToList();
+        Logger.LogWarning(
+            "Registration form rejected on the client: {Errors}", string.Join("; ", errors));
+        _error = string.Join(" ", errors);
+    }
+
     private async Task HandleRegisterAsync()
     {
         if (_busy)
@@ -53,19 +67,39 @@
 
         _busy = true;
         _error = null;
+        Logger.LogInformation(
+            "Registration submitted for user {UserName} (email {Email}).",
+            _model.UserName, _model.Email);
         try
         {
             var auth = await AuthClient.RegisterAsync(new RegisterRequest(_model.UserName!, _model.Email!, _model.Password!));
-            AuthenticationStateProvider.SignIn(auth);
+            Logger.LogInformation(
+                "Registration succeeded for user {UserName} (email {Email}); token expires {ExpiresAt:O}.",
+                auth.UserName, _model.Email, auth.ExpiresAt);
+            await AuthenticationStateProvider.SignInAsync(auth);
+            Logger.LogInformation("Navigating to home after registration.");
             Navigation.NavigateTo("/", replace: true);
         }
         catch (ApiException ex)
         {
+            Logger.LogWarning(
+                "Registration failed for email {Email}: {Message} (status {StatusCode}, errors {Errors}).",
+                _model.Email, ex.Message, ex.StatusCode, ex.Errors);
+            await Js.InvokeVoidAsync("console.warn",
+                $"Registration failed: {ex.Message} (status {ex.StatusCode}, errors {string.Join("; ", ex.Errors?.Values.SelectMany(v => v) ?? [])})");
             _error = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex, "Unexpected error during registration for email {Email}.", _model.Email);
+            await Js.InvokeVoidAsync("console.error", $"Registration unexpected error: {ex}");
+            _error = "Something went wrong during registration. Please try again.";
         }
         finally
         {
             _busy = false;
+            Logger.LogInformation("Registration handler finished.");
         }
     }
 

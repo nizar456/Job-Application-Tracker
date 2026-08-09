@@ -6,22 +6,23 @@ namespace Frontend.Services;
 
 public sealed class ApiAuthenticationStateProvider(TokenStore tokenStore) : AuthenticationStateProvider
 {
-    public override Task<AuthenticationState> GetAuthenticationStateAsync()
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
+        await tokenStore.EnsureLoadedFromStorageAsync();
         var identity = CreateIdentity();
         var principal = identity is null ? new ClaimsPrincipal() : new ClaimsPrincipal(identity);
-        return Task.FromResult(new AuthenticationState(principal));
+        return new AuthenticationState(principal);
     }
 
-    public void SignIn(AuthResponse auth)
+    public async Task SignInAsync(AuthResponse auth)
     {
-        tokenStore.Set(auth.Token, auth.ExpiresAt, auth.UserName, auth.Email);
+        await tokenStore.PersistAsync(auth);
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 
-    public void SignOut()
+    public async Task SignOutAsync()
     {
-        tokenStore.Clear();
+        await tokenStore.ClearPersistedAsync();
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 

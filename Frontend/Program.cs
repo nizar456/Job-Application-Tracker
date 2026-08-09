@@ -13,7 +13,6 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddScoped<TokenStore>();
-builder.Services.AddScoped<AccessTokenHandler>();
 builder.Services.AddScoped<ApiAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<ApiAuthenticationStateProvider>());
 
@@ -30,8 +29,7 @@ var backendBaseUrl = builder.Configuration["BackendApi:BaseUrl"]
 
 builder.Services.AddHttpClient<AuthClient>(client => client.BaseAddress = new Uri(backendBaseUrl));
 
-builder.Services.AddHttpClient<ApiClient>(client => client.BaseAddress = new Uri(backendBaseUrl))
-    .AddHttpMessageHandler(sp => sp.GetRequiredService<AccessTokenHandler>());
+builder.Services.AddHttpClient<ApiClient>(client => client.BaseAddress = new Uri(backendBaseUrl));
 
 var app = builder.Build();
 

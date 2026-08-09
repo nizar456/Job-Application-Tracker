@@ -187,9 +187,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _companies = (await Api.GetAsync<List<CompanyResponse>>("companies"))
-            .OrderBy(c => c.Name)
-            .ToList();
+        try
+        {
+            _companies = (await Api.GetAsync<List<CompanyResponse>>("companies"))
+                .OrderBy(c => c.Name)
+                .ToList();
+        }
+        catch (ApiException ex)
+        {
+            _loadError = ex.Message;
+        }
     }
 
     protected override async Task OnParametersSetAsync()

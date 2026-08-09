@@ -3,6 +3,8 @@
 @inject AuthClient AuthClient
 @inject ApiAuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
+@inject ILogger<Login> Logger
+@inject IJSRuntime Js
 
 <PageTitle>Sign in</PageTitle>
 
@@ -13,15 +15,17 @@
     <div class="alert alert-danger" role="alert">@_error</div>
 }
 
-<EditForm Model="@_model" OnValidSubmit="HandleLoginAsync" FormName="login">
+<EditForm Model="@_model" OnValidSubmit="HandleLoginAsync" OnInvalidSubmit="HandleInvalidSubmit" FormName="login">
     <DataAnnotationsValidator />
     <div class="mb-3">
         <label for="login-email" class="form-label">Email</label>
         <InputText id="login-email" class="form-control" @bind-Value="_model.Email" autocomplete="username" />
+        <ValidationMessage For="() => _model.Email" />
     </div>
     <div class="mb-3">
         <label for="login-password" class="form-label">Password</label>
         <InputText id="login-password" class="form-control" type="password" @bind-Value="_model.Password" autocomplete="current-password" />
+        <ValidationMessage For="() => _model.Password" />
     </div>
     <button type="submit" class="btn btn-primary" disabled="@_busy">@(_busy ? "Signing in..." : "Sign in")</button>
 </EditForm>
@@ -38,6 +42,14 @@
     private bool _busy;
     private string? _error;
 
+    private void HandleInvalidSubmit(EditContext editContext)
+    {
+        var errors = editContext.GetValidationMessages().ToList();
+        Logger.LogWarning(
+            "Login form rejected on the client: {Errors}", string.Join("; ", errors));
+        _error = string.Join(" ", errors);
+    }
+
     private async Task HandleLoginAsync()
     {
         if (_busy)
@@ -47,19 +59,40 @@
 
         _busy = true;
         _error = null;
+        Logger.LogInformation(
+            "Login submitted for email {Email} (returnUrl {ReturnUrl}).",
+            _model.Email, ReturnUrl);
         try
         {
             var auth = await AuthClient.LoginAsync(new LoginRequest(_model.Email!, _model.Password!));
-            AuthenticationStateProvider.SignIn(auth);
-            Navigation.NavigateTo(GetReturnUrl(), replace: true);
+            Logger.LogInformation(
+                "Login succeeded for user {UserName} (email {Email}); token expires {ExpiresAt:O}.",
+                auth.UserName, _model.Email, auth.ExpiresAt);
+            await AuthenticationStateProvider.SignInAsync(auth);
+            var target = GetReturnUrl();
+            Logger.LogInformation("Navigating to {Target} after login.", target);
+            Navigation.NavigateTo(target, replace: true);
         }
         catch (ApiException ex)
         {
+            Logger.LogWarning(
+                "Login failed for email {Email}: {Message} (status {StatusCode}, errors {Errors}).",
+                _model.Email, ex.Message, ex.StatusCode, ex.Errors);
+            await Js.InvokeVoidAsync("console.warn",
+                $"Login failed: {ex.Message} (status {ex.StatusCode}, errors {string.Join("; ", ex.Errors?.Values.SelectMany(v => v) ?? [])})");
             _error = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex, "Unexpected error during login for email {Email}.", _model.Email);
+            await Js.InvokeVoidAsync("console.error", $"Login unexpected error: {ex}");
+            _error = "Something went wrong during sign in. Please try again.";
         }
         finally
         {
             _busy = false;
+            Logger.LogInformation("Login handler finished.");
         }
     }
 

@@ -4,12 +4,12 @@
 <EditForm Model="Model" OnValidSubmit="SubmitAsync" FormName="@FormName">
     <DataAnnotationsValidator />
     <CascadingValue Value="@(ServerErrors ?? NoErrors)" TValue="IReadOnlyDictionary<string, string[]>">
-        @if (_error is not null)
+        @if (!string.IsNullOrEmpty(_error))
         {
             <div class="alert alert-warning" role="alert">@_error</div>
         }
 
-        @if (ErrorMessage is not null)
+        @if (!string.IsNullOrEmpty(ErrorMessage))
         {
             <div class="alert alert-danger" role="alert">@ErrorMessage</div>
         }

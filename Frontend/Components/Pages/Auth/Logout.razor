@@ -15,7 +15,7 @@
 @code {
     private bool _busy;
 
-    private void HandleLogoutAsync()
+    private async Task HandleLogoutAsync()
     {
         if (_busy)
         {
@@ -23,7 +23,7 @@
         }
 
         _busy = true;
-        AuthenticationStateProvider.SignOut();
+        await AuthenticationStateProvider.SignOutAsync();
         Navigation.NavigateTo("/", replace: true);
     }
 }
