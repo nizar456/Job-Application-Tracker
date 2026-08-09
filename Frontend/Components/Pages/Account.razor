@@ -4,16 +4,26 @@
 
 <PageTitle>My account</PageTitle>
 
-<h1>My account</h1>
+<div class="page-header">
+    <div>
+        <h1>My account</h1>
+        <p class="page-subtitle">Your profile details for Job Tracker.</p>
+    </div>
+</div>
 
 <AuthorizeView>
     <Authorized context="state">
-        <dl class="row">
-            <dt class="col-sm-3">User name</dt>
-            <dd class="col-sm-9">@state.User.Identity?.Name</dd>
-            <dt class="col-sm-3">Email</dt>
-            <dd class="col-sm-9">@state.User.FindFirst(ClaimTypes.Email)?.Value</dd>
-        </dl>
-        <a class="btn btn-outline-danger" href="logout">Sign out</a>
+        <div class="card app-card">
+            <div class="card-header">Profile</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">User name</dt>
+                    <dd class="col-sm-9">@state.User.Identity?.Name</dd>
+                    <dt class="col-sm-3">Email</dt>
+                    <dd class="col-sm-9">@state.User.FindFirst(ClaimTypes.Email)?.Value</dd>
+                </dl>
+                <a class="btn btn-outline-danger mt-3" href="logout">Sign out</a>
+            </div>
+        </div>
     </Authorized>
 </AuthorizeView>

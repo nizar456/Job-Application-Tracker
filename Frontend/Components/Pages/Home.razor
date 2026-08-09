@@ -1,7 +1,22 @@
 ﻿@page "/"
+@layout AuthLayout
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Job Tracker</PageTitle>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+<AuthorizeView>
+    <Authorized>
+        <RedirectTo Target="/dashboard" />
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center">
+            <h1>Track your job search</h1>
+            <p class="page-subtitle mb-4">
+                Keep every application, contact, and follow-up in one place with Job Tracker.
+            </p>
+            <a class="btn btn-primary w-100" href="login">Sign in</a>
+            <p class="mt-3 mb-0">
+                New here? <a href="register">Create an account</a>
+            </p>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>

@@ -1,4 +1,5 @@
 @page "/register"
+@layout AuthLayout
 @using System.ComponentModel.DataAnnotations
 @inject AuthClient AuthClient
 @inject ApiAuthenticationStateProvider AuthenticationStateProvider
@@ -8,7 +9,8 @@
 
 <PageTitle>Register</PageTitle>
 
-<h1>Register</h1>
+<h1>Create your account</h1>
+<p class="auth-subtitle">Start tracking your job applications today.</p>
 
 @if (!string.IsNullOrEmpty(_error))
 {
@@ -29,7 +31,7 @@
     </div>
     <div class="mb-3">
         <label for="register-password" class="form-label">Password</label>
-        <span class="form-text">At least 8 characters with upper and lower case, a number, and a symbol.</span>
+        <span class="form-text d-block mb-1">At least 8 characters with upper and lower case, a number, and a symbol.</span>
         <InputText id="register-password" class="form-control" type="password" @bind-Value="_model.Password" autocomplete="new-password" />
         <ValidationMessage For="() => _model.Password" />
     </div>
@@ -38,10 +40,10 @@
         <InputText id="register-confirm" class="form-control" type="password" @bind-Value="_model.ConfirmPassword" autocomplete="new-password" />
         <ValidationMessage For="() => _model.ConfirmPassword" />
     </div>
-    <button type="submit" class="btn btn-primary" disabled="@_busy">@(_busy ? "Creating account..." : "Create account")</button>
+    <button type="submit" class="btn btn-primary w-100" disabled="@_busy">@(_busy ? "Creating account..." : "Create account")</button>
 </EditForm>
 
-<p class="mt-3">
+<p class="mt-3 mb-0 text-center">
     Already have an account? <a href="login">Sign in</a>
 </p>
 

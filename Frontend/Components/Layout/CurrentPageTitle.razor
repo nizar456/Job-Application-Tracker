@@ -1,0 +1,39 @@
+@inject NavigationManager Navigation
+@implements IDisposable
+
+@Title
+
+@code {
+    private string Title { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        UpdateTitle();
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => UpdateTitle();
+
+    private void UpdateTitle()
+    {
+        var path = Navigation.ToAbsoluteUri(Navigation.Uri).AbsolutePath.TrimEnd('/');
+
+        Title = path switch
+        {
+            "" or "/" => "Home",
+            "/dashboard" => "Dashboard",
+            "/applications" => "Applications",
+            "/companies" => "Companies",
+            "/resume-versions" => "CV versions",
+            "/tags" => "Tags",
+            "/account" => "My account",
+            "/logout" => "Sign out",
+            _ when path.StartsWith("/applications/create", StringComparison.OrdinalIgnoreCase) => "New application",
+            _ when path.Contains("/edit", StringComparison.OrdinalIgnoreCase) => "Edit application",
+            _ when path.StartsWith("/applications", StringComparison.OrdinalIgnoreCase) => "Application",
+            _ => "Job Tracker",
+        };
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+}

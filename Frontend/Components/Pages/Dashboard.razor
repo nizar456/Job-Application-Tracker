@@ -4,7 +4,13 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<h1 class="h3">Dashboard</h1>
+<div class="page-header">
+    <div>
+        <h1>Dashboard</h1>
+        <p class="page-subtitle">An overview of your job search at a glance.</p>
+    </div>
+    <a class="btn btn-primary" href="applications/create">New application</a>
+</div>
 
 @if (_loading)
 {
@@ -22,27 +28,36 @@ else
         : dashboard.ApplicationsPerMonth.Max(m => m.Count);
 
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="card text-bg-primary h-100">
-                <div class="card-body">
-                    <div class="h5 mb-0">@dashboard.TotalCount</div>
-                    <div class="small">Total applications</div>
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="metric-card">
+                <span class="metric-icon metric-icon-indigo" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1h-3Zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5Zm1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0ZM1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5Z"/></svg>
+                </span>
+                <div>
+                    <div class="metric-value">@dashboard.TotalCount</div>
+                    <div class="metric-label">Total applications</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="card text-bg-success h-100">
-                <div class="card-body">
-                    <div class="h5 mb-0">@dashboard.ActiveCount</div>
-                    <div class="small">Active applications</div>
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="metric-card">
+                <span class="metric-icon metric-icon-teal" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M15 8h-2.5a.5.5 0 0 1-.5-.5V5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v2.5a.5.5 0 0 1-.5.5H6.5A.5.5 0 0 1 6 7.5V5a.5.5 0 0 0-.5-.5h-1A.5.5 0 0 0 4 5v2.5a.5.5 0 0 1-.5.5H1a.5.5 0 0 0 0 1h2.5a.5.5 0 0 1 .5.5V12a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V9.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V12a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V9.5a.5.5 0 0 1 .5-.5H15a.5.5 0 0 0 0-1Z"/></svg>
+                </span>
+                <div>
+                    <div class="metric-value">@dashboard.ActiveCount</div>
+                    <div class="metric-label">Active applications</div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-lg-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="h5 mb-0">@ResponseRatePercent%</div>
-                    <div class="small">Response rate (@dashboard.ResponseRate.RespondedCount of @dashboard.ResponseRate.BaseCount eligible)</div>
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="metric-card">
+                <span class="metric-icon metric-icon-navy" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.035 1.61a.75.75 0 0 1 .61 1.266L4.14 14.845a.75.75 0 0 1-1.21-.939L12.435 1.71a.75.75 0 0 1 .6-.1ZM4.5 2.25a2.25 2.25 0 1 1 0 4.5 2.25 2.25 0 0 1 0-4.5Zm7 7a2.25 2.25 0 1 1 0 4.5 2.25 2.25 0 0 1 0-4.5Z"/></svg>
+                </span>
+                <div class="flex-grow-1">
+                    <div class="metric-value">@ResponseRatePercent%</div>
+                    <div class="metric-label">Response rate (@dashboard.ResponseRate.RespondedCount of @dashboard.ResponseRate.BaseCount eligible)</div>
                     <div class="progress mt-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@ResponseRatePercent" aria-label="Response rate">
                         <div class="progress-bar" style="width: @ResponseRatePercent%;"></div>
                     </div>
@@ -53,7 +68,7 @@ else
 
     <div class="row g-3">
         <div class="col-12 col-lg-6">
-            <div class="card h-100">
+            <div class="card app-card h-100">
                 <div class="card-header">Applications by status</div>
                 <div class="card-body">
                     @if (dashboard.ApplicationsByStatus.Count == 0)
@@ -67,7 +82,7 @@ else
                             {
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <a class="text-decoration-none" href="@($"applications?status={item.Status}")">@item.Status.DisplayName()</a>
-                                    <span class="badge @item.Status.BadgeClass()">@item.Count</span>
+                                    <span class="badge status-pill @item.Status.BadgeClass()">@item.Count</span>
                                 </li>
                             }
                         </ul>
@@ -77,14 +92,16 @@ else
         </div>
 
         <div class="col-12 col-lg-6">
-            <div class="card h-100">
+            <div class="card app-card h-100">
                 <div class="card-header">Recent applications</div>
                 <div class="card-body">
                     @if (dashboard.RecentApplications.Count == 0)
                     {
-                        <p class="text-muted mb-0">
-                            No applications yet. <a href="applications/create">Create one</a>.
-                        </p>
+                        <div class="empty-state py-4">
+                            <p class="mb-0">
+                                No applications yet. <a href="applications/create">Create one</a>.
+                            </p>
+                        </div>
                     }
                     else
                     {
@@ -96,7 +113,7 @@ else
                                         <div class="fw-semibold">@recent.RoleTitle</div>
                                         <div class="small text-muted">@recent.CompanyName &middot; @recent.DateApplied.ToString("dd MMM yyyy")</div>
                                     </a>
-                                    <span class="badge @recent.Status.BadgeClass()">@recent.Status.DisplayName()</span>
+                                    <span class="badge status-pill @recent.Status.BadgeClass()">@recent.Status.DisplayName()</span>
                                 </li>
                             }
                         </ul>
@@ -109,7 +126,7 @@ else
         </div>
 
         <div class="col-12">
-            <div class="card">
+            <div class="card app-card">
                 <div class="card-header">Applications per month</div>
                 <div class="card-body">
                     @if (dashboard.ApplicationsPerMonth.Count == 0)
@@ -120,13 +137,13 @@ else
                     {
                         @foreach (var month in dashboard.ApplicationsPerMonth)
                         {
-                            <div class="mb-2">
+                            <div class="mb-3">
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span>@FormatMonth(month.YearMonth)</span>
                                     <span>@month.Count</span>
                                 </div>
                                 <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="@maxMonthly" aria-valuenow="@month.Count" aria-label="Applications in @month.YearMonth">
-                                    <div class="progress-bar" style="width: @(month.Count * 100 / maxMonthly)%;"></div>
+                                    <div class="progress-bar progress-bar-teal" style="width: @(month.Count * 100 / maxMonthly)%;"></div>
                                 </div>
                             </div>
                         }

@@ -6,8 +6,11 @@
 
 <PageTitle>Applications</PageTitle>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <h1 class="h3 mb-0">Applications</h1>
+<div class="page-header">
+    <div>
+        <h1>Applications</h1>
+        <p class="page-subtitle">Every role you have applied to, in one place.</p>
+    </div>
     <a class="btn btn-primary" href="applications/create">New application</a>
 </div>
 
@@ -16,54 +19,52 @@
     <div class="alert alert-danger" role="alert">@_loadError</div>
 }
 
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="row g-2 align-items-end">
-            <div class="col-12 col-lg-5">
-                <label for="filter-search" class="form-label">Search</label>
-                <input id="filter-search" class="form-control" @bind="Search" placeholder="Role, company, location, source" aria-describedby="filter-search-help" />
-                <div id="filter-search-help" class="form-text">Matches role, company, location and source.</div>
-            </div>
-            <div class="col-6 col-lg-2">
-                <label for="filter-status" class="form-label">Status</label>
-                <select id="filter-status" class="form-select" @bind="StatusValue">
-                    <option value="">All statuses</option>
-                    @foreach (var status in Enum.GetValues<ApplicationStatus>())
-                    {
-                        <option value="@status.ToString()">@status.DisplayName()</option>
-                    }
-                </select>
-            </div>
-            <div class="col-6 col-lg-4">
-                <label for="filter-company" class="form-label">Company</label>
-                <select id="filter-company" class="form-select" @bind="CompanyValue">
-                    <option value="">All companies</option>
-                    @foreach (var company in _companies)
-                    {
-                        <option value="@company.Id">@company.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="col-6 col-md-3 col-lg-2">
-                <label for="filter-from" class="form-label">From date</label>
-                <input id="filter-from" class="form-control" type="date" @bind="_fromDate" />
-            </div>
-            <div class="col-6 col-md-3 col-lg-2">
-                <label for="filter-to" class="form-label">To date</label>
-                <input id="filter-to" class="form-control" type="date" @bind="_toDate" />
-            </div>
-            <div class="col-12 col-md-3 col-lg-2">
-                <label for="filter-page-size" class="form-label">Per page</label>
-                <select id="filter-page-size" class="form-select" @bind="PageSizeValue">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4 d-flex gap-2">
-                <button type="button" class="btn btn-primary" @onclick="ApplyFilters">Apply filters</button>
-                <button type="button" class="btn btn-outline-secondary" @onclick="ClearFilters">Reset</button>
-            </div>
+<div class="filter-panel">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-lg-5">
+            <label for="filter-search" class="form-label">Search</label>
+            <input id="filter-search" class="form-control" @bind="Search" placeholder="Role, company, location, source" aria-describedby="filter-search-help" />
+            <div id="filter-search-help" class="form-text">Matches role, company, location and source.</div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <label for="filter-status" class="form-label">Status</label>
+            <select id="filter-status" class="form-select" @bind="StatusValue">
+                <option value="">All statuses</option>
+                @foreach (var status in Enum.GetValues<ApplicationStatus>())
+                {
+                    <option value="@status.ToString()">@status.DisplayName()</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-lg-4">
+            <label for="filter-company" class="form-label">Company</label>
+            <select id="filter-company" class="form-select" @bind="CompanyValue">
+                <option value="">All companies</option>
+                @foreach (var company in _companies)
+                {
+                    <option value="@company.Id">@company.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <label for="filter-from" class="form-label">From date</label>
+            <input id="filter-from" class="form-control" type="date" @bind="_fromDate" />
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <label for="filter-to" class="form-label">To date</label>
+            <input id="filter-to" class="form-control" type="date" @bind="_toDate" />
+        </div>
+        <div class="col-12 col-md-3 col-lg-2">
+            <label for="filter-page-size" class="form-label">Per page</label>
+            <select id="filter-page-size" class="form-select" @bind="PageSizeValue">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4 d-flex gap-2">
+            <button type="button" class="btn btn-primary" @onclick="ApplyFilters">Apply filters</button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="ClearFilters">Reset</button>
         </div>
     </div>
 </div>
@@ -78,61 +79,66 @@ else if (_result is null)
 }
 else if (_result.TotalCount == 0)
 {
-    <div class="alert alert-info mb-3" role="status">
-        No applications match your filters.
-        <a href="applications/create">Create your first application</a>.
+    <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2v4.586l7 7L14.586 9 7.586 2H3ZM3 0h4.5a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-5.5 5.5a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 5.5V1a1 1 0 0 1 1-1Zm3 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>
+        </span>
+        <div class="empty-title">No applications match your filters</div>
+        <p><a href="applications/create">Create your first application</a>.</p>
     </div>
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <caption class="visually-hidden">Your job applications</caption>
-            <thead class="table-light">
-                <tr>
-                    <th scope="col">
-                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByRole">
-                            Role @SortIndicator("role")
-                        </button>
-                    </th>
-                    <th scope="col">
-                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByCompany">
-                            Company @SortIndicator("company")
-                        </button>
-                    </th>
-                    <th scope="col" class="d-none d-md-table-cell">Location</th>
-                    <th scope="col">
-                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByStatus">
-                            Status @SortIndicator("status")
-                        </button>
-                    </th>
-                    <th scope="col" class="text-nowrap">
-                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByDateApplied">
-                            Date applied @SortIndicator("dateApplied")
-                        </button>
-                    </th>
-                    <th scope="col"><span class="visually-hidden">Actions</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var application in _result.Items)
-                {
+    <div class="app-card mb-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <caption class="visually-hidden">Your job applications</caption>
+                <thead>
                     <tr>
-                        <td>
-                            <a class="fw-semibold" href="@($"applications/{application.Id}")">@application.RoleTitle</a>
-                        </td>
-                        <td>@application.CompanyName</td>
-                        <td class="d-none d-md-table-cell text-muted">@application.Location</td>
-                        <td><span class="badge @application.Status.BadgeClass()">@application.Status.DisplayName()</span></td>
-                        <td class="text-nowrap">@application.DateApplied.ToString("dd MMM yyyy")</td>
-                        <td class="text-nowrap text-end">
-                            <a class="btn btn-sm btn-outline-primary" href="@($"applications/{application.Id}")">View</a>
-                            <a class="btn btn-sm btn-outline-secondary" href="@($"applications/{application.Id}/edit")">Edit</a>
-                        </td>
+                        <th scope="col">
+                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByRole">
+                                Role @SortIndicator("role")
+                            </button>
+                        </th>
+                        <th scope="col">
+                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByCompany">
+                                Company @SortIndicator("company")
+                            </button>
+                        </th>
+                        <th scope="col" class="d-none d-md-table-cell">Location</th>
+                        <th scope="col">
+                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByStatus">
+                                Status @SortIndicator("status")
+                            </button>
+                        </th>
+                        <th scope="col" class="text-nowrap">
+                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="SortByDateApplied">
+                                Date applied @SortIndicator("dateApplied")
+                            </button>
+                        </th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var application in _result.Items)
+                    {
+                        <tr>
+                            <td>
+                                <a class="fw-semibold" href="@($"applications/{application.Id}")">@application.RoleTitle</a>
+                            </td>
+                            <td class="text-muted">@application.CompanyName</td>
+                            <td class="d-none d-md-table-cell text-muted">@application.Location</td>
+                            <td><span class="badge status-pill @application.Status.BadgeClass()">@application.Status.DisplayName()</span></td>
+                            <td class="text-nowrap text-muted">@application.DateApplied.ToString("dd MMM yyyy")</td>
+                            <td class="text-nowrap text-end">
+                                <a class="btn btn-sm btn-outline-primary" href="@($"applications/{application.Id}")">View</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="@($"applications/{application.Id}/edit")">Edit</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <nav aria-label="Application list pages" class="d-flex flex-wrap justify-content-between align-items-center gap-2">

@@ -18,18 +18,18 @@ else
 {
     var application = _application;
 
-    <div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+    <div class="page-header">
         <div>
-            <h1 class="h3 mb-1">@application.RoleTitle</h1>
-            <div class="text-muted">
+            <h1>@application.RoleTitle</h1>
+            <p class="page-subtitle">
                 @application.CompanyName
                 @if (!string.IsNullOrEmpty(application.Location))
                 {
                     <span class="ms-2">@application.Location</span>
                 }
-            </div>
+            </p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
             <a class="btn btn-outline-primary" href="@($"applications/{application.Id}/edit")">Edit</a>
             @if (_confirmingDelete)
             {
@@ -58,12 +58,12 @@ else
 
     <div class="row g-3 mb-4">
         <div class="col-12 col-lg-7">
-            <div class="card h-100">
+            <div class="card app-card h-100">
                 <div class="card-header">Details</div>
                 <div class="card-body">
                     <dl class="row mb-0">
                         <dt class="col-sm-4">Status</dt>
-                        <dd class="col-sm-8"><span class="badge @application.Status.BadgeClass()">@application.Status.DisplayName()</span></dd>
+                        <dd class="col-sm-8"><span class="badge status-pill @application.Status.BadgeClass()">@application.Status.DisplayName()</span></dd>
 
                         <dt class="col-sm-4">Company</dt>
                         <dd class="col-sm-8">@application.CompanyName</dd>
@@ -97,7 +97,7 @@ else
         </div>
 
         <div class="col-12 col-lg-5">
-            <div class="card h-100">
+            <div class="card app-card h-100">
                 <div class="card-header">Change status</div>
                 <div class="card-body">
                     @if (!string.IsNullOrEmpty(_changeError))
@@ -125,7 +125,7 @@ else
         </div>
 
         <div class="col-12">
-            <div class="card">
+            <div class="card app-card">
                 <div class="card-header">Status timeline</div>
                 <div class="card-body">
                     @if (application.StatusHistory.Count == 0)
@@ -143,7 +143,7 @@ else
         @if (!string.IsNullOrEmpty(application.JobDescription))
         {
             <div class="col-12">
-                <div class="card">
+                <div class="card app-card">
                     <div class="card-header">Job description</div>
                     <div class="card-body">
                         <p class="mb-0 text-break">@application.JobDescription</p>
@@ -155,7 +155,7 @@ else
         @if (!string.IsNullOrEmpty(application.Notes))
         {
             <div class="col-12">
-                <div class="card">
+                <div class="card app-card">
                     <div class="card-header">Notes</div>
                     <div class="card-body">
                         <p class="mb-0 text-break">@application.Notes</p>
@@ -165,7 +165,7 @@ else
         }
 
         <div class="col-12">
-            <div class="card">
+            <div class="card app-card">
                 <div class="card-header">Tags</div>
                 <div class="card-body">
                     @if (application.Tags.Count == 0)

@@ -2,8 +2,11 @@
 
 <PageTitle>@Title</PageTitle>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <h1 class="h3 mb-0">@Title</h1>
+<div class="page-header">
+    <div>
+        <h1>@Title</h1>
+        <p class="page-subtitle">Manage the @(Title.ToLower()) used across your applications.</p>
+    </div>
     <button type="button" class="btn btn-primary" @onclick="OpenCreate">@NewLabel</button>
 </div>
 
@@ -18,54 +21,60 @@
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <caption class="visually-hidden">Your @(Title.ToLower())</caption>
-            <thead class="table-light">
-                <tr>
-                    <th scope="col">Name</th>
-                    @if (HasSecondary)
-                    {
-                        <th scope="col">@SecondaryLabel</th>
-                    }
-                    <th scope="col" class="text-end"><span class="visually-hidden">Actions</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (_items.Count == 0)
-                {
+    <div class="app-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <caption class="visually-hidden">Your @(Title.ToLower())</caption>
+                <thead>
                     <tr>
-                        <td colspan="@(HasSecondary ? 3 : 2)" class="text-muted">No records yet.</td>
+                        <th scope="col">Name</th>
+                        @if (HasSecondary)
+                        {
+                            <th scope="col">@SecondaryLabel</th>
+                        }
+                        <th scope="col" class="text-end"><span class="visually-hidden">Actions</span></th>
                     </tr>
-                }
-                else
-                {
-                    foreach (var item in _items)
+                </thead>
+                <tbody>
+                    @if (_items.Count == 0)
                     {
                         <tr>
-                            <td class="fw-semibold">@item.Name</td>
-                            @if (HasSecondary)
-                            {
-                                <td class="text-muted">@item.Secondary</td>
-                            }
-                            <td class="text-nowrap text-end">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => OpenEdit(item)">Edit</button>
-                                @if (_deleteId == item.Id)
-                                {
-                                    <span class="text-danger ms-2">Delete this @Noun?</span>
-                                    <button type="button" class="btn btn-sm btn-danger" @onclick="() => ConfirmDeleteAsync(item.Id)">Delete</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelDelete">Cancel</button>
-                                }
-                                else
-                                {
-                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => StartDelete(item.Id)">Delete</button>
-                                }
+                            <td colspan="@(HasSecondary ? 3 : 2)">
+                                <div class="empty-state py-4">
+                                    <p class="mb-0">No @(Title.ToLower()) yet. Create your first one to get started.</p>
+                                </div>
                             </td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
+                    else
+                    {
+                        foreach (var item in _items)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.Name</td>
+                                @if (HasSecondary)
+                                {
+                                    <td class="text-muted">@item.Secondary</td>
+                                }
+                                <td class="text-nowrap text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => OpenEdit(item)">Edit</button>
+                                    @if (_deleteId == item.Id)
+                                    {
+                                        <span class="text-danger ms-2">Delete this @Noun?</span>
+                                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => ConfirmDeleteAsync(item.Id)">Delete</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelDelete">Cancel</button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => StartDelete(item.Id)">Delete</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(_deleteError))

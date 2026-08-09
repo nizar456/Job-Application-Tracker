@@ -5,12 +5,15 @@
 
 <PageTitle>Sign out</PageTitle>
 
-<h1>Sign out</h1>
+<div class="auth-card mx-auto">
+    <h1>Sign out</h1>
+    <p class="page-subtitle">Are you sure you want to sign out?</p>
 
-<p>Are you sure you want to sign out?</p>
-
-<button class="btn btn-primary" @onclick="HandleLogoutAsync" disabled="@_busy">Sign out</button>
-<a class="btn btn-link" href="/">Cancel</a>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" @onclick="HandleLogoutAsync" disabled="@_busy">Sign out</button>
+        <a class="btn btn-outline-secondary" href="/">Cancel</a>
+    </div>
+</div>
 
 @code {
     private bool _busy;

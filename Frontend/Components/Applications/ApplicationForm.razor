@@ -14,139 +14,165 @@
             <div class="alert alert-danger" role="alert">@ErrorMessage</div>
         }
 
-        <fieldset class="row g-3" disabled="@_busy">
-            <legend class="visually-hidden">@Legend</legend>
-
-            <div class="col-md-6">
-                <label for="form-company" class="form-label">Company</label>
-                <InputSelect id="form-company" class="form-select" @bind-Value="Model.CompanyId">
-                    <option value="">Choose a company...</option>
-                    @foreach (var company in _companies)
-                    {
-                        <option value="@company.Id">@company.Name</option>
-                    }
-                </InputSelect>
-                <ValidationMessage For="() => Model.CompanyId" />
-                <ServerValidationMessage Field="CompanyId" />
-            </div>
-
-            <div class="col-md-6">
-                <label for="form-role" class="form-label">Role title</label>
-                <InputText id="form-role" class="form-control" @bind-Value="Model.RoleTitle" />
-                <ValidationMessage For="() => Model.RoleTitle" />
-                <ServerValidationMessage Field="RoleTitle" />
-            </div>
-
-            <div class="col-md-6">
-                <label for="form-location" class="form-label">Location</label>
-                <InputText id="form-location" class="form-control" @bind-Value="Model.Location" />
-                <ValidationMessage For="() => Model.Location" />
-                <ServerValidationMessage Field="Location" />
-            </div>
-
-            <div class="col-md-6">
-                <label for="form-work-mode" class="form-label">Work mode</label>
-                <InputSelect id="form-work-mode" class="form-select" @bind-Value="Model.WorkMode">
-                    @foreach (var workMode in new[] { WorkMode.Remote, WorkMode.Hybrid, WorkMode.OnSite })
-                    {
-                        <option value="@workMode">@workMode.DisplayName()</option>
-                    }
-                </InputSelect>
-                <ValidationMessage For="() => Model.WorkMode" />
-                <ServerValidationMessage Field="WorkMode" />
-            </div>
-
-            <div class="col-md-6">
-                <label for="form-date-applied" class="form-label">Date applied</label>
-                <InputDate id="form-date-applied" class="form-control" @bind-Value="Model.DateApplied" />
-                <ValidationMessage For="() => Model.DateApplied" />
-                <ServerValidationMessage Field="DateApplied" />
-            </div>
-
-            <div class="col-md-6">
-                <label for="form-status" class="form-label">Status</label>
-                <InputSelect id="form-status" class="form-select" @bind-Value="Model.Status">
-                    @foreach (var status in Enum.GetValues<ApplicationStatus>().OrderBy(s => s))
-                    {
-                        <option value="@status">@status.DisplayName()</option>
-                    }
-                </InputSelect>
-                <ValidationMessage For="() => Model.Status" />
-                <ServerValidationMessage Field="Status" />
-            </div>
-
-            <div class="col-md-6">
-                <label for="form-source" class="form-label">Source</label>
-                <InputText id="form-source" class="form-control" @bind-Value="Model.Source" />
-                <ValidationMessage For="() => Model.Source" />
-                <ServerValidationMessage Field="Source" />
-            </div>
-
-            <div class="col-md-6">
-                <label for="form-job-url" class="form-label">Job posting URL</label>
-                <InputText id="form-job-url" class="form-control" @bind-Value="Model.JobUrl" />
-                <ValidationMessage For="() => Model.JobUrl" />
-                <ServerValidationMessage Field="JobUrl" />
-            </div>
-
-            <div class="col-12 col-lg-6">
-                <label for="form-resume" class="form-label">CV version</label>
-                <InputSelect id="form-resume" class="form-select" @bind-Value="Model.ResumeVersionId">
-                    <option value="">None</option>
-                    @foreach (var resume in _resumeVersions)
-                    {
-                        <option value="@resume.Id">@resume.Name</option>
-                    }
-                </InputSelect>
-                <ValidationMessage For="() => Model.ResumeVersionId" />
-                <ServerValidationMessage Field="ResumeVersionId" />
-            </div>
-
-            <div class="col-12">
-                <label for="form-description" class="form-label">Job description</label>
-                <InputTextArea id="form-description" class="form-control" @bind-Value="Model.JobDescription" rows="4" />
-                <ValidationMessage For="() => Model.JobDescription" />
-                <ServerValidationMessage Field="JobDescription" />
-            </div>
-
-            <div class="col-12">
-                <label for="form-notes" class="form-label">Notes</label>
-                <InputTextArea id="form-notes" class="form-control" @bind-Value="Model.Notes" rows="3" />
-                <ValidationMessage For="() => Model.Notes" />
-                <ServerValidationMessage Field="Notes" />
-            </div>
-
-            <div class="col-12">
-                <fieldset>
-                    <legend class="form-label">Tags</legend>
-                    @if (_tags.Count == 0)
-                    {
-                        <div class="form-text">No tags yet.</div>
-                    }
-                    else
-                    {
-                        foreach (var tag in _tags)
+        <fieldset class="form-section" disabled="@_busy">
+            <legend class="section-heading">Position</legend>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="form-company" class="form-label">Company</label>
+                    <InputSelect id="form-company" class="form-select" @bind-Value="Model.CompanyId">
+                        <option value="">Choose a company...</option>
+                        @foreach (var company in _companies)
                         {
-                            if (_tagChecks.TryGetValue(tag.Id, out var isChecked))
-                            {
-                                <div class="form-check form-check-inline">
-                                    <input
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        id="@($"form-tag-{tag.Id}")"
-                                        checked="@isChecked"
-                                        @onchange="() => ToggleTag(tag.Id, isChecked)" />
-                                    <label class="form-check-label" for="@($"form-tag-{tag.Id}")">@tag.Name</label>
-                                </div>
-                            }
+                            <option value="@company.Id">@company.Name</option>
                         }
-                    }
-                    <ServerValidationMessage Field="TagIds" />
-                </fieldset>
+                    </InputSelect>
+                    <ValidationMessage For="() => Model.CompanyId" />
+                    <ServerValidationMessage Field="CompanyId" />
+                </div>
+
+                <div class="col-md-6">
+                    <label for="form-role" class="form-label">Role title</label>
+                    <InputText id="form-role" class="form-control" @bind-Value="Model.RoleTitle" />
+                    <ValidationMessage For="() => Model.RoleTitle" />
+                    <ServerValidationMessage Field="RoleTitle" />
+                </div>
             </div>
         </fieldset>
 
-        <div class="mt-3">
+        <fieldset class="form-section" disabled="@_busy">
+            <legend class="section-heading">Location &amp; work mode</legend>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="form-location" class="form-label">Location</label>
+                    <InputText id="form-location" class="form-control" @bind-Value="Model.Location" />
+                    <ValidationMessage For="() => Model.Location" />
+                    <ServerValidationMessage Field="Location" />
+                </div>
+
+                <div class="col-md-6">
+                    <label for="form-work-mode" class="form-label">Work mode</label>
+                    <InputSelect id="form-work-mode" class="form-select" @bind-Value="Model.WorkMode">
+                        @foreach (var workMode in new[] { WorkMode.Remote, WorkMode.Hybrid, WorkMode.OnSite })
+                        {
+                            <option value="@workMode">@workMode.DisplayName()</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Model.WorkMode" />
+                    <ServerValidationMessage Field="WorkMode" />
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section" disabled="@_busy">
+            <legend class="section-heading">Status &amp; timing</legend>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="form-date-applied" class="form-label">Date applied</label>
+                    <InputDate id="form-date-applied" class="form-control" @bind-Value="Model.DateApplied" />
+                    <ValidationMessage For="() => Model.DateApplied" />
+                    <ServerValidationMessage Field="DateApplied" />
+                </div>
+
+                <div class="col-md-6">
+                    <label for="form-status" class="form-label">Status</label>
+                    <InputSelect id="form-status" class="form-select" @bind-Value="Model.Status">
+                        @foreach (var status in Enum.GetValues<ApplicationStatus>().OrderBy(s => s))
+                        {
+                            <option value="@status">@status.DisplayName()</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Model.Status" />
+                    <ServerValidationMessage Field="Status" />
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section" disabled="@_busy">
+            <legend class="section-heading">Posting</legend>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="form-source" class="form-label">Source</label>
+                    <InputText id="form-source" class="form-control" @bind-Value="Model.Source" />
+                    <ValidationMessage For="() => Model.Source" />
+                    <ServerValidationMessage Field="Source" />
+                </div>
+
+                <div class="col-md-6">
+                    <label for="form-job-url" class="form-label">Job posting URL</label>
+                    <InputText id="form-job-url" class="form-control" @bind-Value="Model.JobUrl" />
+                    <ValidationMessage For="() => Model.JobUrl" />
+                    <ServerValidationMessage Field="JobUrl" />
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <label for="form-resume" class="form-label">CV version</label>
+                    <InputSelect id="form-resume" class="form-select" @bind-Value="Model.ResumeVersionId">
+                        <option value="">None</option>
+                        @foreach (var resume in _resumeVersions)
+                        {
+                            <option value="@resume.Id">@resume.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Model.ResumeVersionId" />
+                    <ServerValidationMessage Field="ResumeVersionId" />
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section" disabled="@_busy">
+            <legend class="section-heading">Job description</legend>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label for="form-description" class="form-label">Details</label>
+                    <InputTextArea id="form-description" class="form-control" @bind-Value="Model.JobDescription" rows="4" />
+                    <ValidationMessage For="() => Model.JobDescription" />
+                    <ServerValidationMessage Field="JobDescription" />
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section" disabled="@_busy">
+            <legend class="section-heading">Notes &amp; tags</legend>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label for="form-notes" class="form-label">Notes</label>
+                    <InputTextArea id="form-notes" class="form-control" @bind-Value="Model.Notes" rows="3" />
+                    <ValidationMessage For="() => Model.Notes" />
+                    <ServerValidationMessage Field="Notes" />
+                </div>
+
+                <div class="col-12">
+                    <fieldset>
+                        <legend class="form-label">Tags</legend>
+                        @if (_tags.Count == 0)
+                        {
+                            <div class="form-text">No tags yet.</div>
+                        }
+                        else
+                        {
+                            foreach (var tag in _tags)
+                            {
+                                if (_tagChecks.TryGetValue(tag.Id, out var isChecked))
+                                {
+                                    <div class="form-check form-check-inline">
+                                        <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            id="@($"form-tag-{tag.Id}")"
+                                            checked="@isChecked"
+                                            @onchange="() => ToggleTag(tag.Id, isChecked)" />
+                                        <label class="form-check-label" for="@($"form-tag-{tag.Id}")">@tag.Name</label>
+                                    </div>
+                                }
+                            }
+                        }
+                        <ServerValidationMessage Field="TagIds" />
+                    </fieldset>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="mt-4">
             <button type="submit" class="btn btn-primary" disabled="@_busy">@(_busy ? SubmitBusyLabel : SubmitLabel)</button>
         </div>
     </CascadingValue>
@@ -162,8 +188,6 @@
     [Parameter] public string SubmitLabel { get; set; } = "Save application";
 
     [Parameter] public string SubmitBusyLabel { get; set; } = "Saving...";
-
-    [Parameter] public string Legend { get; set; } = "Application details";
 
     [Parameter] public IReadOnlyDictionary<string, string[]>? ServerErrors { get; set; }
 
